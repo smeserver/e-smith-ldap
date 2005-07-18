@@ -1,0 +1,13 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-4.11.1/root/etc/e-smith/events/actions/ldap-delete mezzanine_patched_e-smith-ldap-4.11.1/root/etc/e-smith/events/actions/ldap-delete
+--- e-smith-ldap-4.11.1/root/etc/e-smith/events/actions/ldap-delete	2002-03-25 12:17:42.000000000 -0700
++++ mezzanine_patched_e-smith-ldap-4.11.1/root/etc/e-smith/events/actions/ldap-delete	2005-07-17 21:34:42.967060888 -0600
+@@ -34,9 +34,6 @@
+ my %conf;
+ tie %conf, 'esmith::config';
+ 
+-my %accounts;
+-tie %accounts, 'esmith::config', '/home/e-smith/accounts';
+-
+ my $status = db_get_prop(\%conf, 'ldap', 'status');
+ unless (defined $status && $status eq "enabled" )
+ {
