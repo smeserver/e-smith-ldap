@@ -1,0 +1,14 @@
+Index: e-smith-ldap/createlinks
+diff -u e-smith-ldap/createlinks:1.14 e-smith-ldap/createlinks:1.15
+--- e-smith-ldap/createlinks:1.14	Tue Mar  8 20:09:26 2005
++++ e-smith-ldap/createlinks	Tue Mar  8 20:18:57 2005
+@@ -23,7 +23,7 @@
+ event_link("ldap-update", "group-modify", "25");
+ 
+ event_link("ldap-update",   "ldap-update", "80");
+-event_link("adjust-masq",   "ldap-update", "90");
++safe_symlink("adjust", "root/etc/e-smith/events/ldap-update/services2adjust/masq");
+ 
+ event_link("ldap-update", "user-create", "25");
+ 
+Index: e-smith-ldap/e-smith-ldap.spec

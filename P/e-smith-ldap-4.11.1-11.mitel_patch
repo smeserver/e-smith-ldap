@@ -1,0 +1,118 @@
+Index: e-smith-ldap/e-smith-ldap.spec
+diff -u e-smith-ldap/root/etc/e-smith/events/actions/ldap-update:1.6 e-smith-ldap/root/etc/e-smith/events/actions/ldap-update:1.7
+--- e-smith-ldap/root/etc/e-smith/events/actions/ldap-update:1.6	Thu Sep  5 18:20:58 2002
++++ e-smith-ldap/root/etc/e-smith/events/actions/ldap-update	Fri Apr  1 16:47:01 2005
+@@ -1,25 +1,24 @@
+ #!/usr/bin/perl -w
+ 
+ #----------------------------------------------------------------------
+-# copyright (C) 1999, 2000 e-smith, inc.
+-#		
++# copyright (C) 1999-2005 Mitel Networks Corporation
++# 
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation; either version 2 of the License, or
+ # (at your option) any later version.
+-#		
++# 		
+ # This program is distributed in the hope that it will be useful,
+ # but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ # GNU General Public License for more details.
+-#		
++# 		
+ # You should have received a copy of the GNU General Public License
+ # along with this program; if not, write to the Free Software
+ # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+ # 
+-# Technical support for this program is available from e-smith, inc.
+-# For details, please visit our web site at www.e-smith.com or
+-# call us on 1 888 ESMITH 1 (US/Canada toll free) or +1 613 564 8000
++# Technical support for this program is available from Mitel Networks 
++# Please visit our web site www.mitel.com/sme/ for details.
+ #----------------------------------------------------------------------
+ 
+ package esmith;
+@@ -30,6 +29,13 @@
+ use esmith::AccountsDB;
+ use esmith::util;
+ use Net::LDAP;
++#use Unicode::String;
++
++sub utf8
++{
++    #return Unicode::String::latin1 shift;
++    return shift;
++}
+ 
+ my $c = esmith::ConfigDB->open_ro;
+ my $a = esmith::AccountsDB->open_ro;
+@@ -111,15 +117,15 @@
+ 	push @attrs, (objectClass => 'person');
+ 	push @attrs, (uid => $key);
+ 
+-	push @attrs, (cn => $name) unless ($name =~ /^\s*$/);
+-	push @attrs, (givenName => $first) unless $first =~ /^\s*$/;
+-	push @attrs, (sn => $last) unless $last =~ /^\s*$/;
+-	push @attrs, (mail => "$key\@$domain");
+-	push @attrs, (telephoneNumber => $phone) unless $phone =~ /^\s*$/;
+-	push @attrs, (o => $company) unless $company =~ /^\s*$/;
+-	push @attrs, (ou => $dept) unless $dept =~ /^\s*$/;
+-	push @attrs, (l => $city) unless $city =~ /^\s*$/;
+-	push @attrs, (street => $street) unless $street =~ /^\s*$/;
++	push @attrs, (cn => utf8($name)) if $name;
++	push @attrs, (givenName => utf8($first)) if $first;
++	push @attrs, (sn => utf8($last)) if $last;
++	push @attrs, (mail => utf8("$key\@$domain"));
++	push @attrs, (telephoneNumber => $phone) if $phone;
++	push @attrs, (o => utf8($company)) if $company;
++	push @attrs, (ou => utf8($dept)) if $dept;
++	push @attrs, (l => utf8($city)) if $city;
++	push @attrs, (street => utf8($street)) if $street;
+     }
+     elsif ($type eq 'group')
+     {
+@@ -129,13 +135,13 @@
+ 	my $key = $acct->key;
+ 	my $desc = $acct->prop('Description') || '';
+ 
+-	push @attrs, (cn => $desc) unless $desc =~ /^\s*$/;
+-	push @attrs, (mail => "$key\@$domain");
+-	push @attrs, (telephoneNumber => $phone) unless $phone =~ /^\s*$/;
+-	push @attrs, (o => $company) unless $company =~ /^\s*$/;
+-	push @attrs, (ou => $dept) unless $dept =~ /^\s*$/;
+-	push @attrs, (l => $city) unless $city =~ /^\s*$/;
+-	push @attrs, (street => $street) unless $street =~ /^\s*$/;
++	push @attrs, (cn =>  utf8($desc)) if $desc =~ /^\s*$/;
++	push @attrs, (mail =>  utf8("$key\@$domain"));
++	push @attrs, (telephoneNumber => $phone) if $phone =~ /^\s*$/;
++	push @attrs, (o =>  utf8($company)) if $company;
++	push @attrs, (ou =>  utf8($dept)) if $dept;
++	push @attrs, (l =>  utf8($city)) if $city;
++	push @attrs, (street =>  utf8($street)) if $street;
+     }
+     my $dn = "uid=$key,$base";
+     if (($event eq 'user-create') || ($event eq 'group-create'))
+Index: e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+diff -u e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin:1.1 e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin:1.2
+--- e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin:1.1	Wed Mar 23 12:36:25 2005
++++ e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	Fri Apr  1 16:47:02 2005
+@@ -1,13 +1,14 @@
+ {
+     use esmith::AccountsDB;
+     use esmith::util;
+-    use Unicode::String;
++    #use Unicode::String;
+ 
+     $a = esmith::AccountsDB->open_ro;
+     $ldapBase = esmith::util::ldapBase ($DomainName);
+     sub utf8
+     {
+-	Unicode::String::latin1(shift);
++	#Unicode::String::latin1(shift);
++	return shift;
+     }
+     $OUT = "";
+ }

@@ -1,0 +1,14 @@
+Index: e-smith-ldap/createlinks
+diff -u e-smith-ldap/createlinks:1.13 e-smith-ldap/createlinks:1.14
+--- e-smith-ldap/createlinks:1.13	Tue Jan 25 13:10:14 2005
++++ e-smith-ldap/createlinks	Tue Mar  8 20:09:26 2005
+@@ -4,8 +4,6 @@
+ 
+ panel_link("directory", "manager");
+ 
+-event_link("ldap-conf", "console-save", "60");
+-
+ foreach (qw(ldap.conf slapd.conf))
+ {
+ templates2events("/etc/openldap/$_",
+Index: e-smith-ldap/e-smith-ldap.spec

@@ -1,0 +1,8 @@
+Index: e-smith-ldap/e-smith-ldap.spec
+diff -u /dev/null e-smith-ldap/root/var/service/ldap/run:1.1
+--- /dev/null	Mon Dec 20 15:43:39 2004
++++ e-smith-ldap/root/var/service/ldap/run	Mon Dec 20 15:42:41 2004
+@@ -0,0 +1,3 @@
++#! /bin/sh
++
++exec /usr/sbin/slapd -u ldap -d 0

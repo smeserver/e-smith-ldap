@@ -1,0 +1,159 @@
+Index: e-smith-ldap/createlinks
+diff -u e-smith-ldap/createlinks:1.15 e-smith-ldap/createlinks:1.17
+--- e-smith-ldap/createlinks:1.15	Tue Mar  8 20:18:57 2005
++++ e-smith-ldap/createlinks	Wed Mar 23 12:36:25 2005
+@@ -12,26 +12,19 @@
+ 	    console-save
+ 	));
+ }
+-event_link("generic_template_expand", "ldap-update", "05");
+ 
+-event_link("ldap-rebuild", "bootstrap-console-save", "80");
++templates2events("/home/e-smith/db/ldap/ldif", "bootstrap-console-save");
+ 
+ event_link("ldap-update", "group-create", "25");
+-
+ event_link("ldap-delete", "group-delete", "25");
+-
+-event_link("ldap-update", "group-modify", "25");
+-
+-event_link("ldap-update",   "ldap-update", "80");
+-safe_symlink("adjust", "root/etc/e-smith/events/ldap-update/services2adjust/masq");
+-
+ event_link("ldap-update", "user-create", "25");
+-
+ event_link("ldap-delete", "user-delete", "25");
+ 
+ event_link("ldap-update", "user-modify", "25");
+-
+-event_link("gentle-ldap-dump", "pre-backup", "25");
++event_link("ldap-update", "group-modify", "25");
++event_link("ldap-update",   "ldap-update", "80");
++safe_symlink("restart", "root/etc/e-smith/events/ldap-update/services2adjust/ldap");
++safe_symlink("adjust", "root/etc/e-smith/events/ldap-update/services2adjust/masq");
+ 
+ event_link("ldap-delete-dumps", "pre-restore", "25");
+ 
+Index: e-smith-ldap/e-smith-ldap.spec
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/10organisation:1.1
+--- /dev/null	Wed Mar 23 12:37:05 2005
++++ e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/10organisation	Wed Mar 23 12:36:25 2005
+@@ -0,0 +1,4 @@
++{
++    $OUT .= "dn: $ldapBase\n";
++    $OUT .= "objectClass : organization\n";
++}
+Index: e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups:1.1
+--- /dev/null	Wed Mar 23 12:37:05 2005
++++ e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups	Wed Mar 23 12:36:25 2005
+@@ -0,0 +1,24 @@
++{
++    my $phone = $ldap{'defaultTelephoneNumber'} || '';
++    my $company = $ldap{'defaultCompany'} || '';
++    my $dept = $ldap{'defaultDepartment'} || '';
++    my $city = $ldap{'defaultCity'} || '';
++    my $street = $ldap{'defaultStreet'} || '';
++    foreach ($a->groups)
++    {
++	my $key = $_->key;
++	my $desc = $_->prop('Description') || '';
++
++	$OUT .= "\n";
++	$OUT .= "dn: uid=$key,$ldapBase\n";
++	$OUT .= "objectClass: group\n";
++	$OUT .= "uid: " . $key . "\n";
++	$OUT .= "cn: $desc\n" if $desc;
++	$OUT .= "mail: $key\@$DomainName\n";
++	$OUT .= "telephoneNumber: $phone\n" if $phone;
++	$OUT .= "o: $company\n" if $company;
++	$OUT .= "ou: $dept\n" if $dept;
++	$OUT .= "l: $city\n" if $city;
++	$OUT .= "street: $street\n" if $street;
++    }
++}
+Index: e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users:1.1
+--- /dev/null	Wed Mar 23 12:37:05 2005
++++ e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users	Wed Mar 23 12:36:25 2005
+@@ -0,0 +1,28 @@
++{
++    foreach my $user ($a->users)
++    {
++	my $key = $user->key;
++	my $name = $user->prop('FirstName') . " " . $user->prop('LastName');
++	my $first = $user->prop('FirstName') || '';
++	my $last = $user->prop('LastName') || '';
++	my $phone = $user->prop('Phone') || '';
++	my $company = $user->prop('Company') || '';
++	my $dept = $user->prop('Dept') || '';
++	my $city = $user->prop('City') || '';
++	my $street = $user->prop('Street') || '';
++
++	$OUT .= "\n";
++	$OUT .= utf8("dn: uid=$key,$ldapBase\n");
++	$OUT .= utf8("objectClass: person\n");
++	$OUT .= utf8("uid: $key\n");
++	$OUT .= utf8("cn: $name\n") if $name;
++	$OUT .= utf8("givenName: $first\n") if $first;
++	$OUT .= utf8("sn: $last\n") if $last;
++	$OUT .= utf8("mail: $key\@$DomainName\n");
++	$OUT .= utf8("telephoneNumber: $phone\n") if $phone;
++	$OUT .= utf8("o: $company\n") if $company;
++	$OUT .= utf8("ou: $dept\n") if $dept;
++	$OUT .= utf8("l: $city\n") if $city;
++	$OUT .= utf8("street: $street\n") if $street;
++    }
++}
+Index: e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin:1.1
+--- /dev/null	Wed Mar 23 12:37:05 2005
++++ e-smith-ldap/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	Wed Mar 23 12:36:25 2005
+@@ -0,0 +1,13 @@
++{
++    use esmith::AccountsDB;
++    use esmith::util;
++    use Unicode::String;
++
++    $a = esmith::AccountsDB->open_ro;
++    $ldapBase = esmith::util::ldapBase ($DomainName);
++    sub utf8
++    {
++	Unicode::String::latin1(shift);
++    }
++    $OUT = "";
++}
+Index: e-smith-ldap/root/var/service/ldap/finish
+diff -u /dev/null e-smith-ldap/root/var/service/ldap/finish:1.1
+--- /dev/null	Wed Mar 23 12:37:05 2005
++++ e-smith-ldap/root/var/service/ldap/finish	Wed Mar 23 12:36:25 2005
+@@ -0,0 +1,3 @@
++#! /bin/sh
++
++exec /usr/sbin/slapcat -l ldif
+Index: e-smith-ldap/root/var/service/ldap/run
+diff -u e-smith-ldap/root/var/service/ldap/run:1.1 e-smith-ldap/root/var/service/ldap/run:1.2
+--- e-smith-ldap/root/var/service/ldap/run:1.1	Mon Dec 20 15:42:41 2004
++++ e-smith-ldap/root/var/service/ldap/run	Wed Mar 23 12:36:25 2005
+@@ -1,3 +1,21 @@
+ #! /bin/sh
+ 
++domain=$(/sbin/e-smith/config get DomainName)
++ldif="/home/e-smith/db/ldap/$domain.ldif"
++
++# Set up symlink for ldap dump at shutdown
++ln -sf $ldif ./ldif
++
++if [ \! -f $ldif ]
++then
++    ldif=/home/e-smith/db/ldap/ldif
++fi
++
++# Prime directory if required
++if [ \! -f /var/lib/ldap/nextid.dbb -a -f $ldif ]
++then
++    setuidgid ldap slapadd -c < $ldif
++fi
++
++# Now run daemon
+ exec /usr/sbin/slapd -u ldap -d 0

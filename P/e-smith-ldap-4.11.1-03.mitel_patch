@@ -1,0 +1,258 @@
+Index: e-smith-ldap/createlinks
+diff -u e-smith-ldap/createlinks:1.10 e-smith-ldap/createlinks:1.11
+--- e-smith-ldap/createlinks:1.10	Mon May 10 16:03:53 2004
++++ e-smith-ldap/createlinks	Tue Nov  9 17:05:30 2004
+@@ -20,11 +20,6 @@
+ event_link("ldap-update",   "ldap-update", "80");
+ event_link("adjust-masq",   "ldap-update", "90");
+ 
+-event_link("ldap-startup", "post-install", "60");
+-
+-event_link("ldap-startup",                "post-upgrade", "60");
+-event_link("conf-migrate-ldap-variables", "post-upgrade", "05");
+-
+ event_link("ldap-update", "user-create", "25");
+ 
+ event_link("ldap-delete", "user-delete", "25");
+Index: e-smith-ldap/e-smith-ldap.spec
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/access:1.1
+--- /dev/null	Tue Nov  9 17:08:31 2004
++++ e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/access	Tue Nov  9 17:05:31 2004
+@@ -0,0 +1 @@
++private
+Index: e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultCity
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultCity:1.1
+--- /dev/null	Tue Nov  9 17:08:31 2004
++++ e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultCity	Tue Nov  9 17:05:31 2004
+@@ -0,0 +1 @@
++Ottawa
+Index: e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultCompany
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultCompany:1.1
+--- /dev/null	Tue Nov  9 17:08:31 2004
++++ e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultCompany	Tue Nov  9 17:05:31 2004
+@@ -0,0 +1 @@
++XYZ Corporation
+Index: e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultDepartment
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultDepartment:1.1
+--- /dev/null	Tue Nov  9 17:08:31 2004
++++ e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultDepartment	Tue Nov  9 17:05:31 2004
+@@ -0,0 +1 @@
++Main
+Index: e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultPhoneNumber
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultPhoneNumber:1.1
+--- /dev/null	Tue Nov  9 17:08:31 2004
++++ e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultPhoneNumber	Tue Nov  9 17:05:31 2004
+@@ -0,0 +1 @@
++555-5555
+Index: e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultStreet
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultStreet:1.1
+--- /dev/null	Tue Nov  9 17:08:31 2004
++++ e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/defaultStreet	Tue Nov  9 17:05:31 2004
+@@ -0,0 +1 @@
++123 Main Street
+Index: e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/status
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/status:1.1
+--- /dev/null	Tue Nov  9 17:08:31 2004
++++ e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/status	Tue Nov  9 17:05:31 2004
+@@ -0,0 +1 @@
++enabled
+Index: e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/type
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/type:1.1
+--- /dev/null	Tue Nov  9 17:08:31 2004
++++ e-smith-ldap/root/etc/e-smith/db/configuration/defaults/ldap/type	Tue Nov  9 17:05:31 2004
+@@ -0,0 +1 @@
++service
+Index: e-smith-ldap/root/etc/e-smith/db/configuration/migrate/ldap/GenPassword
+diff -u /dev/null e-smith-ldap/root/etc/e-smith/db/configuration/migrate/ldap/GenPassword:1.1
+--- /dev/null	Tue Nov  9 17:08:31 2004
++++ e-smith-ldap/root/etc/e-smith/db/configuration/migrate/ldap/GenPassword	Tue Nov  9 17:05:31 2004
+@@ -0,0 +1,3 @@
++{
++    -f "/etc/openldap/ldap.pw" || esmith::util::genLdapPassword();
++}
+Index: e-smith-ldap/root/etc/e-smith/events/actions/conf-migrate-ldap-variables
+diff -u e-smith-ldap/root/etc/e-smith/events/actions/conf-migrate-ldap-variables:1.1.1.1 e-smith-ldap/root/etc/e-smith/events/actions/conf-migrate-ldap-variables:removed
+--- e-smith-ldap/root/etc/e-smith/events/actions/conf-migrate-ldap-variables:1.1.1.1	Mon Mar 25 14:17:42 2002
++++ e-smith-ldap/root/etc/e-smith/events/actions/conf-migrate-ldap-variables	Wed Dec 31 19:00:00 1969
+@@ -1,75 +0,0 @@
+-#!/usr/bin/perl -w
+-
+-#----------------------------------------------------------------------
+-# copyright (C) 1999-2001 e-smith, inc.
+-#		
+-# This program is free software; you can redistribute it and/or modify
+-# it under the terms of the GNU General Public License as published by
+-# the Free Software Foundation; either version 2 of the License, or
+-# (at your option) any later version.
+-#		
+-# This program is distributed in the hope that it will be useful,
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+-# GNU General Public License for more details.
+-#		
+-# You should have received a copy of the GNU General Public License
+-# along with this program; if not, write to the Free Software
+-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+-# 
+-# Technical support for this program is available from e-smith, inc.
+-# Please visit our web site www.e-smith.com for details.
+-#----------------------------------------------------------------------
+-
+-package esmith;
+-
+-use strict;
+-use Errno;
+-use esmith::config;
+-use esmith::util;
+-use esmith::db;
+-
+-my %conf;
+-tie %conf, 'esmith::config';
+-
+-#------------------------------------------------------------
+-# Migrate ldap configuration into new ldap service configuration
+-#------------------------------------------------------------
+-
+-my $old = $conf{LDAPServerMode};
+-if (defined $old)
+-{
+-    db_set(\%conf, "ldap", 'service',
+-                { status => 'enabled', access => $old });
+-    delete $conf{LDAPServerMode};
+-}
+-
+-unless(defined db_get_type(\%conf, 'ldap'))
+-{
+-    db_set(\%conf, "ldap", 'service',
+-                { status => 'enabled', access => "private" });
+-}
+-
+-#------------------------------------------------------------
+-# Migrate deprecated variables into new format
+-#------------------------------------------------------------
+-
+-my %old2new = 
+-	( 
+-	    LDAPDefaultCity => "defaultCity",
+-	    LDAPDefaultDepartment => "defaultDepartment",
+-	    LDAPDefaultCompany => "defaultCompany",
+-	    LDAPDefaultPhoneNumber => "defaultPhoneNumber",
+-	    LDAPDefaultStreet => "defaultStreet",
+-	);
+-
+-foreach my $prop (keys %old2new)
+-{
+-    if ( defined($conf{$prop}) )
+-    {
+-	db_set_prop(\%conf, "ldap", $old2new{$prop}, $conf{$prop});
+-        delete $conf{$prop};
+-    }
+-}
+-
+-exit (0);
+Index: e-smith-ldap/root/etc/e-smith/events/actions/ldap-startup
+diff -u e-smith-ldap/root/etc/e-smith/events/actions/ldap-startup:1.3 e-smith-ldap/root/etc/e-smith/events/actions/ldap-startup:removed
+--- e-smith-ldap/root/etc/e-smith/events/actions/ldap-startup:1.3	Wed Oct  2 14:02:37 2002
++++ e-smith-ldap/root/etc/e-smith/events/actions/ldap-startup	Wed Dec 31 19:00:00 1969
+@@ -1,81 +0,0 @@
+-#!/usr/bin/perl -w
+-
+-#----------------------------------------------------------------------
+-# copyright (C) 1999, 2000 e-smith, inc.
+-#		
+-# This program is free software; you can redistribute it and/or modify
+-# it under the terms of the GNU General Public License as published by
+-# the Free Software Foundation; either version 2 of the License, or
+-# (at your option) any later version.
+-#		
+-# This program is distributed in the hope that it will be useful,
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+-# GNU General Public License for more details.
+-#		
+-# You should have received a copy of the GNU General Public License
+-# along with this program; if not, write to the Free Software
+-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+-# 
+-# Technical support for this program is available from e-smith, inc.
+-# For details, please visit our web site at www.e-smith.com or
+-# call us on 1 888 ESMITH 1 (US/Canada toll free) or +1 613 564 8000
+-#----------------------------------------------------------------------
+-
+-package esmith;
+-
+-use strict;
+-use Errno;
+-use esmith::config;
+-use esmith::util;
+-use esmith::db;
+-
+-my %conf;
+-tie %conf, 'esmith::config';
+-
+-# Create user and group "ldap" if not already present.
+-unless (defined getgrnam("ldap"))
+-{
+-    warn("Group \"ldap\" does not exist: adding\n");
+-    system("/usr/sbin/groupadd", "-g", "55", "ldap") and
+-	warn("Error running groupadd \"ldap\"\n");
+-}
+-
+-unless (defined getpwnam("ldap"))
+-{
+-    warn("User \"ldap\" does not exist: adding\n");
+-    system("/usr/sbin/useradd",
+-	    "-c", "LDAP User",
+-	    "-d", "/var/lib/ldap",
+-	    "-u", "55",
+-	    "-g", "ldap",
+-	    "-M",
+-	    "-s", "/bin/false",
+-	    "ldap") and
+-	warn("Error running useradd \"ldap\"\n");
+-}
+-
+-#------------------------------------------------------------
+-# Enable/Disable the service based on the settings in the
+-# services database.
+-#------------------------------------------------------------
+-
+-my $serviceStatus = db_get_prop(\%conf, "ldap", "status");
+-
+-if (!defined $serviceStatus)
+-{
+-    $serviceStatus = "enabled";
+-    db_set(\%conf, "ldap", "service",
+-                { status => $serviceStatus,
+-                  access => "private",
+-		  defaultCity => "Ottawa",
+-		  defaultDepartment => "Main",
+-		  defaultPhoneNumber => "555-5555",
+-		  defaultCompany => "XYZ Corporation",
+-		  defaultStreet => "123 Main Street"
+-                })
+-        or warn("Could not add ldap to configuration db\n");
+-    esmith::util::genLdapPassword();
+-}
+-
+-exit (0);
+Index: e-smith-ldap/root/etc/openldap/schema/redhat/rfc822-MailMember.schema
+diff -u /dev/null e-smith-ldap/root/etc/openldap/schema/redhat/rfc822-MailMember.schema:1.1
+--- /dev/null	Tue Nov  9 17:08:32 2004
++++ e-smith-ldap/root/etc/openldap/schema/redhat/rfc822-MailMember.schema	Tue Nov  9 17:05:31 2004
+@@ -0,0 +1,15 @@
++attributetype
++   ( 1.3.6.1.4.1.42.2.27.2.1.15
++      NAME 'rfc822MailMember'
++      DESC 'rfc822 mail address of group member(s)'
++      EQUALITY caseIgnoreIA5Match
++      SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 
++   )
++objectclass ( 1.3.6.1.4.1.42.2.27.1.2.5
++        NAME 'nisMailAlias'
++        SUP top STRUCTURAL
++        DESC 'NIS mail alias'
++        MUST cn
++        MAY rfc822MailMember )
++
++

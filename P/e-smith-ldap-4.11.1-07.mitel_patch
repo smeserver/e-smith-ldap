@@ -1,0 +1,56 @@
+Index: e-smith-ldap/createlinks
+diff -u e-smith-ldap/createlinks:1.12 e-smith-ldap/createlinks:1.13
+--- e-smith-ldap/createlinks:1.12	Tue Jan 18 18:07:48 2005
++++ e-smith-ldap/createlinks	Tue Jan 25 13:10:14 2005
+@@ -1,33 +1,6 @@
+ #!/usr/bin/perl -w
+ 
+ use esmith::Build::CreateLinks qw(:all);
+-use File::Basename;
+-use File::Path;
+-
+-sub safe_touch
+-{
+-    my ($path) = @_;
+-    my ($file, $dir) = fileparse $path;
+-    unless (-d $dir)
+-    {
+-	mkpath $dir or die "Could not create dir $dir: $!";
+-    }
+-    open(F, ">$path") or die "Could not open/create file $path: $!";
+-    close(F) or die "Could not close file $path: $!";
+-}
+-
+-# Prime the empty file tree that the generic template expansion
+-# action uses
+-sub templates2events
+-{
+-    my ($path, @events) = @_;
+-    
+-    foreach (@events)
+-    {
+-	safe_touch "root/etc/e-smith/events/$_/templates2expand/$path";
+-    }
+-}
+-
+ 
+ panel_link("directory", "manager");
+ 
+@@ -41,7 +14,7 @@
+ 	    console-save
+ 	));
+ }
+-event_link("generic_template_expand", ldap-update, "05");
++event_link("generic_template_expand", "ldap-update", "05");
+ 
+ event_link("ldap-rebuild", "bootstrap-console-save", "80");
+ 
+@@ -63,7 +36,5 @@
+ event_link("gentle-ldap-dump", "pre-backup", "25");
+ 
+ event_link("ldap-delete-dumps", "pre-restore", "25");
+-
+-event_link("ldap-delete-dumps", "post-backup", "20");
+ 
+ exit 0;
+Index: e-smith-ldap/e-smith-ldap.spec

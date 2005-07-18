@@ -1,0 +1,141 @@
+Index: e-smith-ldap/createlinks
+diff -u e-smith-ldap/createlinks:1.11 e-smith-ldap/createlinks:1.12
+--- e-smith-ldap/createlinks:1.11	Tue Nov  9 17:05:30 2004
++++ e-smith-ldap/createlinks	Tue Jan 18 18:07:48 2005
+@@ -1,12 +1,48 @@
+ #!/usr/bin/perl -w
+ 
+ use esmith::Build::CreateLinks qw(:all);
++use File::Basename;
++use File::Path;
++
++sub safe_touch
++{
++    my ($path) = @_;
++    my ($file, $dir) = fileparse $path;
++    unless (-d $dir)
++    {
++	mkpath $dir or die "Could not create dir $dir: $!";
++    }
++    open(F, ">$path") or die "Could not open/create file $path: $!";
++    close(F) or die "Could not close file $path: $!";
++}
++
++# Prime the empty file tree that the generic template expansion
++# action uses
++sub templates2events
++{
++    my ($path, @events) = @_;
++    
++    foreach (@events)
++    {
++	safe_touch "root/etc/e-smith/events/$_/templates2expand/$path";
++    }
++}
++
+ 
+ panel_link("directory", "manager");
+ 
+ event_link("ldap-conf", "console-save", "60");
+ 
+-event_link("ldap-conf",    "bootstrap-console-save", "60");
++foreach (qw(ldap.conf slapd.conf))
++{
++templates2events("/etc/openldap/$_",
++	qw(
++	    bootstrap-console-save
++	    console-save
++	));
++}
++event_link("generic_template_expand", ldap-update, "05");
++
+ event_link("ldap-rebuild", "bootstrap-console-save", "80");
+ 
+ event_link("ldap-update", "group-create", "25");
+@@ -15,8 +51,6 @@
+ 
+ event_link("ldap-update", "group-modify", "25");
+ 
+-event_link("conf-masq",     "ldap-update", "50");
+-event_link("conf-security", "ldap-update", "50");
+ event_link("ldap-update",   "ldap-update", "80");
+ event_link("adjust-masq",   "ldap-update", "90");
+ 
+Index: e-smith-ldap/e-smith-ldap.spec
+diff -u e-smith-ldap/root/etc/e-smith/events/actions/ldap-conf:1.3 e-smith-ldap/root/etc/e-smith/events/actions/ldap-conf:removed
+--- e-smith-ldap/root/etc/e-smith/events/actions/ldap-conf:1.3	Wed Jul  9 14:44:48 2003
++++ e-smith-ldap/root/etc/e-smith/events/actions/ldap-conf	Wed Dec 31 19:00:00 1969
+@@ -1,73 +0,0 @@
+-#!/usr/bin/perl -w
+-
+-#----------------------------------------------------------------------
+-# copyright (C) 1999, 2000, 2001 e-smith, inc.
+-#		
+-# This program is free software; you can redistribute it and/or modify
+-# it under the terms of the GNU General Public License as published by
+-# the Free Software Foundation; either version 2 of the License, or
+-# (at your option) any later version.
+-#		
+-# This program is distributed in the hope that it will be useful,
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+-# GNU General Public License for more details.
+-#		
+-# You should have received a copy of the GNU General Public License
+-# along with this program; if not, write to the Free Software
+-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+-# 
+-# Technical support for this program is available from e-smith, inc.
+-# For details, please visit our web site at www.e-smith.com or
+-# call us on 1 888 ESMITH 1 (US/Canada toll free) or +1 613 564 8000
+-#----------------------------------------------------------------------
+-
+-package esmith;
+-
+-use strict;
+-use Errno;
+-use esmith::config;
+-use esmith::util;
+-use esmith::db;
+-
+-my %conf;
+-tie %conf, 'esmith::config';
+-
+-my %accounts;
+-tie %accounts, 'esmith::config', '/home/e-smith/accounts';
+-
+-my $status = db_get_prop(\%conf, 'ldap', 'status');
+-
+-#------------------------------------------------------------
+-# Only process templates if ldap service is enabled 
+-#------------------------------------------------------------
+-
+-if (defined $status && $status eq "enabled" )
+-{
+-    esmith::util::processTemplate ({ CONFREF => \%conf,
+-	TEMPLATE_PATH => "/etc/openldap/ldap.conf"});
+-    esmith::util::processTemplate ({ CONFREF => \%conf,
+-	TEMPLATE_PATH => "/etc/openldap/slapd.conf",
+-	UID => 'root',
+-	GID => 'ldap',
+-	PERMS => 0640});
+-}
+-
+-my $event = $ARGV [0];
+-if (($event ne 'bootstrap-console-save') && ($event ne 'console-save'))
+-{
+-    my $status = db_get_prop(\%conf, "ldap", "status") || "disabled";
+-
+-    my $action = ($status eq "enabled") ? "restart" : "stop";
+-    
+-    untie %conf;
+-
+-    esmith::util::serviceControl
+-       (
+-           NAME   => 'ldap',
+-           ACTION => $action
+-       ) ||
+-       die "Couldn't $action ldap";
+-}
+-
+-exit (0);
