@@ -2,7 +2,7 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.11.1
-%define release 15sme01
+%define release 15sme02
 Version: %{version}
 Release: %{release}
 License: GPL
@@ -21,6 +21,7 @@ Patch9: e-smith-ldap-4.11.1-13.mitel_patch
 Patch10: e-smith-ldap-4.11.1-14.mitel_patch
 Patch11: e-smith-ldap-4.11.1-15.mitel_patch
 Patch12: e-smith-ldap-4.11.1-dbmoved.patch
+Patch13: e-smith-ldap-4.11.1-masqchange.patch
 Packager: e-smith developers <bugs@e-smith.com>
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
@@ -34,6 +35,11 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Jul 20 2005 Shad L. Lords <slords@mail.com>
+- [4.11.1-15sme02]
+- Move masq fragement from template to db [SF: 1241415]
+
+
 * Sun Jul 17 2005 Shad L. Lords <slords@mail.com>
 - [4.11.1-15sme01]
 - Prep for db move
@@ -606,6 +612,7 @@ e-smith server and gateway software - LDAP module.
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
+%patch13 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
