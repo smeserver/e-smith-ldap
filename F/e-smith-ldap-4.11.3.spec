@@ -1,27 +1,14 @@
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
-%define version 4.11.1
-%define release 17
+%define version 4.11.3
+%define release 02
 Version: %{version}
 Release: %{release}
 License: GPL
 Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
-Patch0: e-smith-ldap-4.11.1-03.mitel_patch
-Patch1: e-smith-ldap-4.11.1-04.mitel_patch
-Patch2: e-smith-ldap-4.11.1-06.mitel_patch
-Patch3: e-smith-ldap-4.11.1-07.mitel_patch
-Patch4: e-smith-ldap-4.11.1-08.mitel_patch
-Patch5: e-smith-ldap-4.11.1-09.mitel_patch
-Patch6: e-smith-ldap-4.11.1-10.mitel_patch
-Patch7: e-smith-ldap-4.11.1-11.mitel_patch
-Patch8: e-smith-ldap-4.11.1-12.mitel_patch
-Patch9: e-smith-ldap-4.11.1-13.mitel_patch
-Patch10: e-smith-ldap-4.11.1-14.mitel_patch
-Patch11: e-smith-ldap-4.11.1-15.mitel_patch
-Patch12: e-smith-ldap-4.11.1-16.mitel_patch
-Patch13: e-smith-ldap-4.11.1-17.mitel_patch
+Patch0: e-smith-ldap-4.11.3-02.mitel_patch
 Packager: e-smith developers <bugs@e-smith.com>
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
@@ -35,6 +22,27 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Mon Nov 21 2005 Charlie Brady <charlieb@e-smith.com>
+- [4.11.3-02]
+- Work around slapd's failure to accept 'objectClass: group' (in spite
+  of schema checking being disabled). [SF: 1362868]
+
+* Fri Oct 14 2005 Gordon Rowell <gordonr@e-smith.com>
+- [4.11.3-01]
+- Remove L10Ns from base packages [SF: 1309520]
+
+* Fri Oct 14 2005 Gordon Rowell <gordonr@e-smith.com>
+- [4.11.2-01]
+- New dev stream before relocating L10Ns
+
+* Fri Sep 30 2005 Gordon Rowell <gordonr@e-smith.com>
+- [4.11.1-19]
+- Added Italian L10N - Thanks Filippo Carletti [SF: 1309266]
+
+* Mon Sep 26 2005 Gordon Rowell <gordonr@e-smith.com>
+- [4.11.1-18]
+- Added German L10N - Thanks Dietmar Berteld [SF: 1293325]
+
 * Tue Sep  6 2005 Charlie Brady <charlieb@e-smith.com>
 - [4.11.1-17]
 - Add template fragment to allow bind using LDAP version
@@ -601,19 +609,6 @@ e-smith server and gateway software - LDAP module.
 %prep
 %setup
 %patch0 -p1
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch9 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
