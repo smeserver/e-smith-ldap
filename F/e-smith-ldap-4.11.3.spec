@@ -2,7 +2,7 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.11.3
-%define release 02
+%define release 03
 Version: %{version}
 Release: %{release}
 License: GPL
@@ -22,6 +22,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Nov 30 2005 Gordon Rowell <gordonr@gormand.com.au> 4.11.3-03
+- Bump release number only
+
 * Mon Nov 21 2005 Charlie Brady <charlieb@e-smith.com>
 - [4.11.3-02]
 - Work around slapd's failure to accept 'objectClass: group' (in spite
