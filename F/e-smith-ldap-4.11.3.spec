@@ -2,13 +2,14 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.11.3
-%define release 03
+%define release 04
 Version: %{version}
 Release: %{release}
 License: GPL
 Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
 Patch0: e-smith-ldap-4.11.3-02.mitel_patch
+Patch1: e-smith-ldap-4.11.3-02.domain_change.patch
 Packager: e-smith developers <bugs@e-smith.com>
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
@@ -22,6 +23,10 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sun Jan 15 2006 Charlie Brady <charlieb@e-smith.com> 4.11.3-04
+- Delete old contents of directory if domain name is changed.
+  [SME: 393]
+
 * Wed Nov 30 2005 Gordon Rowell <gordonr@gormand.com.au> 4.11.3-03
 - Bump release number only
 
@@ -612,6 +617,7 @@ e-smith server and gateway software - LDAP module.
 %prep
 %setup
 %patch0 -p1
+%patch1 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

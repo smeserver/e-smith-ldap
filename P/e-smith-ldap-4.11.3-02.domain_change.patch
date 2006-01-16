@@ -1,0 +1,36 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-4.11.3/root/etc/e-smith/templates.metadata/home/e-smith/db/ldap/ldif mezzanine_patched_e-smith-ldap-4.11.3/root/etc/e-smith/templates.metadata/home/e-smith/db/ldap/ldif
+--- e-smith-ldap-4.11.3/root/etc/e-smith/templates.metadata/home/e-smith/db/ldap/ldif	1969-12-31 19:00:00.000000000 -0500
++++ mezzanine_patched_e-smith-ldap-4.11.3/root/etc/e-smith/templates.metadata/home/e-smith/db/ldap/ldif	2006-01-15 20:38:38.000000000 -0500
+@@ -0,0 +1,2 @@
++TEMPLATE_PATH="/home/e-smith/db/ldap/ldif"
++OUTPUT_FILENAME=use esmith::ConfigDB; my $d = esmith::ConfigDB->open_ro->get('DomainName')->value; "/home/e-smith/db/ldap/$d.ldif"
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-4.11.3/root/var/service/ldap/run mezzanine_patched_e-smith-ldap-4.11.3/root/var/service/ldap/run
+--- e-smith-ldap-4.11.3/root/var/service/ldap/run	2006-01-15 20:39:01.000000000 -0500
++++ mezzanine_patched_e-smith-ldap-4.11.3/root/var/service/ldap/run	2006-01-15 20:32:29.000000000 -0500
+@@ -3,14 +3,21 @@
+ domain=$(/sbin/e-smith/config get DomainName)
+ ldif="/home/e-smith/db/ldap/$domain.ldif"
+ 
+-# Set up symlink for ldap dump at shutdown
+-ln -sf $ldif ./ldif
+-
+-if [ \! -f $ldif ]
++if [ -e ldif ]
+ then
+-    ldif=/home/e-smith/db/ldap/ldif
++    old_ldif=$(readlink ldif)
++    if [ "$old_ldif" != "$ldif" ]
++    then
++	# The domain name has changed, so we need to delete
++	# the old directory contents. We still have the old
++	# dump.
++	find /var/lib/ldap -type f | xargs rm -f
++    fi
+ fi
+ 
++# Set up symlink for ldap dump at shutdown
++ln -sf $ldif ./ldif
++
+ # Prime directory if required
+ if [ \! -f /var/lib/ldap/nextid.dbb -a -f $ldif ]
+ then
