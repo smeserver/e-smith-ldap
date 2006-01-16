@@ -2,7 +2,7 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.11.3
-%define release 04
+%define release 05
 Version: %{version}
 Release: %{release}
 License: GPL
@@ -23,6 +23,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Mon Jan 16 2006 Charlie Brady <charlieb@e-smith.com> 4.11.3-05
+- Remove obsolete ldap-rebuild script. [SME: 463]
+
 * Sun Jan 15 2006 Charlie Brady <charlieb@e-smith.com> 4.11.3-04
 - Delete old contents of directory if domain name is changed.
   [SME: 393]
@@ -618,6 +621,7 @@ e-smith server and gateway software - LDAP module.
 %setup
 %patch0 -p1
 %patch1 -p1
+rm root/etc/e-smith/events/actions/ldap-rebuild
 
 %build
 mkdir -p root/etc/e-smith/tests
