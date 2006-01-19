@@ -1,0 +1,13 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-4.11.3/createlinks mezzanine_patched_e-smith-ldap-4.11.3/createlinks
+--- e-smith-ldap-4.11.3/createlinks	2005-04-15 17:34:15.000000000 -0400
++++ mezzanine_patched_e-smith-ldap-4.11.3/createlinks	2006-01-19 16:22:46.000000000 -0500
+@@ -22,7 +22,9 @@
+ 
+ event_link("ldap-update", "user-modify", "25");
+ event_link("ldap-update", "group-modify", "25");
++
+ event_link("ldap-update",   "ldap-update", "80");
++templates2events("/etc/rc.d/init.d/masq", "ldap-update");
+ safe_symlink("restart", "root/etc/e-smith/events/ldap-update/services2adjust/ldap");
+ safe_symlink("adjust", "root/etc/e-smith/events/ldap-update/services2adjust/masq");
+ safe_symlink("sigusr1", "root/etc/e-smith/events/ldap-update/services2adjust/httpd-e-smith");

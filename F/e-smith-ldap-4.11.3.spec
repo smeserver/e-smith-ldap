@@ -2,7 +2,7 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.11.3
-%define release 05
+%define release 06
 Version: %{version}
 Release: %{release}
 License: GPL
@@ -10,6 +10,7 @@ Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
 Patch0: e-smith-ldap-4.11.3-02.mitel_patch
 Patch1: e-smith-ldap-4.11.3-02.domain_change.patch
+Patch2: e-smith-ldap-4.11.3-02.public_access.patch
 Packager: e-smith developers <bugs@e-smith.com>
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
@@ -23,6 +24,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Jan 19 2006 Charlie Brady <charlieb@e-smith.com> 4.11.3-06
+- Reexpand masq template during ldap-update. [SME: 520]
+
 * Mon Jan 16 2006 Charlie Brady <charlieb@e-smith.com> 4.11.3-05
 - Remove obsolete ldap-rebuild script. [SME: 463]
 
@@ -622,6 +626,7 @@ e-smith server and gateway software - LDAP module.
 %patch0 -p1
 %patch1 -p1
 rm root/etc/e-smith/events/actions/ldap-rebuild
+%patch2 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
