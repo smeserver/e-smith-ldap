@@ -2,7 +2,7 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.11.3
-%define release 06
+%define release 07
 Version: %{version}
 Release: %{release}
 License: GPL
@@ -11,6 +11,7 @@ Source: %{name}-%{version}.tar.gz
 Patch0: e-smith-ldap-4.11.3-02.mitel_patch
 Patch1: e-smith-ldap-4.11.3-02.domain_change.patch
 Patch2: e-smith-ldap-4.11.3-02.public_access.patch
+Patch3: e-smith-ldap-4.11.3-02.public_access.patch2
 Packager: e-smith developers <bugs@e-smith.com>
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
@@ -24,6 +25,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Fri Jan 20 2006 Charlie Brady <charlieb@e-smith.com> 4.11.3-07
+- Reexpand hosts.allow template during ldap-update. [SME: 520]
+
 * Thu Jan 19 2006 Charlie Brady <charlieb@e-smith.com> 4.11.3-06
 - Reexpand masq template during ldap-update. [SME: 520]
 
@@ -627,6 +631,7 @@ e-smith server and gateway software - LDAP module.
 %patch1 -p1
 rm root/etc/e-smith/events/actions/ldap-rebuild
 %patch2 -p1
+%patch3 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
