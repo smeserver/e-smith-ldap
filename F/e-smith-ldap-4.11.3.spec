@@ -2,7 +2,7 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.11.3
-%define release 07
+%define release 08
 Version: %{version}
 Release: %{release}
 License: GPL
@@ -12,6 +12,7 @@ Patch0: e-smith-ldap-4.11.3-02.mitel_patch
 Patch1: e-smith-ldap-4.11.3-02.domain_change.patch
 Patch2: e-smith-ldap-4.11.3-02.public_access.patch
 Patch3: e-smith-ldap-4.11.3-02.public_access.patch2
+Patch4: e-smith-ldap-4.11.3-utf8.patc
 Packager: e-smith developers <bugs@e-smith.com>
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
@@ -25,6 +26,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sun Jan 22 2006 Charlie Brady <charlieb@e-smith.com> 4.11.3-08
+- Use correct utf8 encoding for non-ascii attributes. [SME: 537]
+
 * Fri Jan 20 2006 Charlie Brady <charlieb@e-smith.com> 4.11.3-07
 - Reexpand hosts.allow template during ldap-update. [SME: 520]
 
