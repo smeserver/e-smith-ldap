@@ -12,7 +12,7 @@ Patch0: e-smith-ldap-4.11.3-02.mitel_patch
 Patch1: e-smith-ldap-4.11.3-02.domain_change.patch
 Patch2: e-smith-ldap-4.11.3-02.public_access.patch
 Patch3: e-smith-ldap-4.11.3-02.public_access.patch2
-Patch4: e-smith-ldap-4.11.3-utf8.patc
+Patch4: e-smith-ldap-4.11.3-utf8.patch
 Packager: e-smith developers <bugs@e-smith.com>
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
@@ -636,6 +636,7 @@ e-smith server and gateway software - LDAP module.
 rm root/etc/e-smith/events/actions/ldap-rebuild
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
