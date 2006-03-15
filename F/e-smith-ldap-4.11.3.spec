@@ -1,18 +1,13 @@
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
-%define version 4.11.3
-%define release 08
+%define version 4.12.0
+%define release 01
 Version: %{version}
 Release: %{release}
 License: GPL
 Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
-Patch0: e-smith-ldap-4.11.3-02.mitel_patch
-Patch1: e-smith-ldap-4.11.3-02.domain_change.patch
-Patch2: e-smith-ldap-4.11.3-02.public_access.patch
-Patch3: e-smith-ldap-4.11.3-02.public_access.patch2
-Patch4: e-smith-ldap-4.11.3-utf8.patch
 Packager: e-smith developers <bugs@e-smith.com>
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
@@ -26,6 +21,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Mar 15 2006 Charlie Brady <charlie_brady@mitel.com> 4.12.0-01
+- Roll stable stream version. [SME: 1016]
+
 * Sun Jan 22 2006 Charlie Brady <charlieb@e-smith.com> 4.11.3-08
 - Use correct utf8 encoding for non-ascii attributes. [SME: 537]
 
@@ -631,12 +629,6 @@ e-smith server and gateway software - LDAP module.
 
 %prep
 %setup
-%patch0 -p1
-%patch1 -p1
-rm root/etc/e-smith/events/actions/ldap-rebuild
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
