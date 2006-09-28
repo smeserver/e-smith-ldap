@@ -2,12 +2,13 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.12.0
-%define release 01
+%define release 02
 Version: %{version}
 Release: %{release}
 License: GPL
 Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
+Patch0: e-smith-ldap-4.12.0-noipv6.patch
 Packager: e-smith developers <bugs@e-smith.com>
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
@@ -21,6 +22,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Sep 28 2006 Charlie Brady <charlie_brady@mitel.com> 4.12.0-02
+- Don't attempt to create IPv6 socket (log noise). [SME: 1946]
+
 * Wed Mar 15 2006 Charlie Brady <charlie_brady@mitel.com> 4.12.0-01
 - Roll stable stream version. [SME: 1016]
 
@@ -629,6 +633,7 @@ e-smith server and gateway software - LDAP module.
 
 %prep
 %setup
+%patch0 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
