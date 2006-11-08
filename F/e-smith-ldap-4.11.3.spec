@@ -2,13 +2,14 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.12.0
-%define release 02
+%define release 03
 Version: %{version}
 Release: %{release}
 License: GPL
 Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
 Patch0: e-smith-ldap-4.12.0-noipv6.patch
+Patch1: e-smith-ldap-4.12.0-slapd.conf.perms.patch
 Packager: e-smith developers <bugs@e-smith.com>
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
@@ -22,6 +23,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Nov 08 2006 Charlie Brady <charlie_brady@mitel.com> 4.12.0-03
+- Correct permissions on slapd.conf. [SME: 2037]
+
 * Thu Sep 28 2006 Charlie Brady <charlie_brady@mitel.com> 4.12.0-02
 - Don't attempt to create IPv6 socket (log noise). [SME: 1946]
 
@@ -383,7 +387,7 @@ e-smith server and gateway software - LDAP module.
 
 * Mon Mar 25 2002 Kirrily Robert <skud@e-smith.com>
 - [4.5.0-02]
-- removed extraneous rmdir in %setup that was breaking the build
+- removed extraneous rmdir in setup section that was breaking the build
 
 * Mon Mar 25 2002 Kirrily Robert <skud@e-smith.com>
 - [4.5.0-01]
@@ -634,6 +638,7 @@ e-smith server and gateway software - LDAP module.
 %prep
 %setup
 %patch0 -p1
+%patch1 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
