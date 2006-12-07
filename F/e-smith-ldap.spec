@@ -2,15 +2,15 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.12.0
-%define release 03
+%define release 4
 Version: %{version}
-Release: %{release}
+Release: %smerelease %{release}
+Packager: %{_packager}
 License: GPL
 Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
 Patch0: e-smith-ldap-4.12.0-noipv6.patch
 Patch1: e-smith-ldap-4.12.0-slapd.conf.perms.patch
-Packager: e-smith developers <bugs@e-smith.com>
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -23,6 +23,10 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Dec 07 2006 Shad L. Lords <slords@mail.com>
+- Update to new release naming.  No functional changes.
+- Make Packager generic
+
 * Wed Nov 08 2006 Charlie Brady <charlie_brady@mitel.com> 4.12.0-03
 - Correct permissions on slapd.conf. [SME: 2037]
 
