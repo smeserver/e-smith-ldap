@@ -2,7 +2,7 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.12.0
-%define release 4
+%define release 5
 Version: %{version}
 Release: %smerelease %{release}
 Packager: %{_packager}
@@ -11,6 +11,7 @@ Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
 Patch0: e-smith-ldap-4.12.0-noipv6.patch
 Patch1: e-smith-ldap-4.12.0-slapd.conf.perms.patch
+Patch2: e-smith-ldap-4.12.0-success.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -23,6 +24,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sat Jan 13 2006 Shad L. Lords <slords@mail.com> 4.12.0-5
+- Make success/failure messages standard [SME: 2289]
+
 * Thu Dec 07 2006 Shad L. Lords <slords@mail.com>
 - Update to new release naming.  No functional changes.
 - Make Packager generic
@@ -643,6 +647,7 @@ e-smith server and gateway software - LDAP module.
 %setup
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
