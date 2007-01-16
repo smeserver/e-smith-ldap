@@ -24,7 +24,7 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
-* Sat Jan 13 2006 Shad L. Lords <slords@mail.com> 4.12.0-5
+* Sat Jan 13 2007 Shad L. Lords <slords@mail.com> 4.12.0-5
 - Make success/failure messages standard [SME: 2289]
 
 * Thu Dec 07 2006 Shad L. Lords <slords@mail.com>
