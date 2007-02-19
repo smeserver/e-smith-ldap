@@ -2,7 +2,7 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.12.0
-%define release 5
+%define release 6
 Version: %{version}
 Release: %smerelease %{release}
 Packager: %{_packager}
@@ -12,6 +12,7 @@ Source: %{name}-%{version}.tar.gz
 Patch0: e-smith-ldap-4.12.0-noipv6.patch
 Patch1: e-smith-ldap-4.12.0-slapd.conf.perms.patch
 Patch2: e-smith-ldap-4.12.0-success.patch
+Patch3: e-smith-ldap-4.12.0-pid_args_files.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -24,6 +25,11 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Mon Feb 19 2007 Charlie Brady <charlie_brady@mitel.com> 4.12.0-6
+- Don't tell slapd to create pid and args files that we don't need
+  and don't use (and can't create with later openldap version).
+  [SME: 2477]
+
 * Sat Jan 13 2007 Shad L. Lords <slords@mail.com> 4.12.0-5
 - Make success/failure messages standard [SME: 2289]
 
@@ -648,6 +654,7 @@ e-smith server and gateway software - LDAP module.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
