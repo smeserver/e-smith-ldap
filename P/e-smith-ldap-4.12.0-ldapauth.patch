@@ -858,8 +858,8 @@ diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-4.12.0/root/var/service/ldap/run m
 -      setuidgid ldap slapadd -c
 +    if [ -e "$old_ldif" ]
 +    then
-+       old_base_dn=$(echo $old_domain | sed -e 's/./,dc=/g' -e 's/^/dc=/')
-+       base_dn=$(echo $domain | sed -e 's/./,dc=/g' -e 's/^/dc=/')
++       old_base_dn=$(echo $old_domain | sed -e 's/\./,dc=/g' -e 's/^/dc=/')
++       base_dn=$(echo $domain | sed -e 's/\./,dc=/g' -e 's/^/dc=/')
 +       sed -e "s/$old_base_dn/$base_dn/" \
 +           -e 's/objectClass: group/objectClass: posixGroup/' < $old_ldif | \
 +           setuidgid ldap slapadd -c
