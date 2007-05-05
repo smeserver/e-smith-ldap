@@ -4,8 +4,7 @@ Name: %{name}
 %define version 4.12.0
 %define release 6
 Version: %{version}
-Release: %smerelease %{release}
-Packager: %{_packager}
+Release: %{release}%{?dist}
 License: GPL
 Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
@@ -25,6 +24,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sun Apr 29 2007 Shad L. Lords <slords@mail.com>
+- Clean up spec so package can be built by koji/plague
+
 * Mon Feb 19 2007 Charlie Brady <charlie_brady@mitel.com> 4.12.0-6
 - Don't tell slapd to create pid and args files that we don't need
   and don't use (and can't create with later openldap version).
