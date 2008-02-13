@@ -2,7 +2,7 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.12.0
-%define release 7
+%define release 8
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -13,11 +13,13 @@ Patch1: e-smith-ldap-4.12.0-slapd.conf.perms.patch
 Patch2: e-smith-ldap-4.12.0-success.patch
 Patch3: e-smith-ldap-4.12.0-pid_args_files.patch
 Patch4: e-smith-ldap-4.12.0-objectClass.patch
+Patch5: e-smith-ldap-4.12.0-tags2general.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
 Requires: e-smith-lib >= 1.15.1-16
 Requires: openldap >= 2.0.0, perl(Net::LDAP)
+Requires: e-smith-formmagick >= 1.4.0-9
 BuildRequires: e-smith-devtools >= 1.13.1-03
 AutoReqProv: no
 
@@ -25,6 +27,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Feb 13 2008 Stephen Noble <support@dungog.net> 1.12.0-8
+- Remove <base> tags now in general [SME: 3919]
+
 * Tue Jun 26 2007 Charlie Brady <charlie_brady@mitel.com>
 - Fix format error in ldif template. [SME: 3107]
 
@@ -662,6 +667,7 @@ e-smith server and gateway software - LDAP module.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
