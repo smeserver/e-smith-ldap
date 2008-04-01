@@ -2,7 +2,7 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.12.0
-%define release 8
+%define release 9
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -14,6 +14,7 @@ Patch2: e-smith-ldap-4.12.0-success.patch
 Patch3: e-smith-ldap-4.12.0-pid_args_files.patch
 Patch4: e-smith-ldap-4.12.0-objectClass.patch
 Patch5: e-smith-ldap-4.12.0-tags2general.patch
+Patch6: e-smith-ldap-4.12.0-freebusy.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -27,6 +28,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Tue Apr 1 2008 Shad L. Lords <slords@mail.com> 4.12.0-9
+- Add free/busy URL entry to help kronolith contribs [SME: 1806]
+
 * Wed Feb 13 2008 Stephen Noble <support@dungog.net> 1.12.0-8
 - Remove <base> tags now in general [SME: 3919]
 
@@ -668,6 +672,7 @@ e-smith server and gateway software - LDAP module.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
