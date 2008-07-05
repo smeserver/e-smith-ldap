@@ -29,7 +29,7 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
-* Fri Jul 4 2008 Jonathan Martens <smeserver-contribs@snetram.nl> 1.12.0-10
+* Sat Jul 5 2008 Jonathan Martens <smeserver-contribs@snetram.nl> 1.12.0-10
 - Add common <base> tags to e-smith-formmagick's general [SME: 4279]
 
 * Tue Apr 1 2008 Shad L. Lords <slords@mail.com> 
