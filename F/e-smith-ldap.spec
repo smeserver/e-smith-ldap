@@ -2,7 +2,7 @@ Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 4.12.0
-%define release 9
+%define release 10
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -15,6 +15,7 @@ Patch3: e-smith-ldap-4.12.0-pid_args_files.patch
 Patch4: e-smith-ldap-4.12.0-objectClass.patch
 Patch5: e-smith-ldap-4.12.0-tags2general.patch
 Patch6: e-smith-ldap-4.12.0-freebusy.patch
+Patch7: e-smith-ldap-4.12.0-add2general.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -28,6 +29,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sat Jul 5 2008 Jonathan Martens <smeserver-contribs@snetram.nl> 1.12.0-10
+- Add common <base> tags to e-smith-formmagick's general [SME: 4279]
+
 * Tue Apr 1 2008 Shad L. Lords <slords@mail.com> 4.12.0-9
 - Add free/busy URL entry to help kronolith contribs [SME: 1806]
 
@@ -673,6 +677,7 @@ e-smith server and gateway software - LDAP module.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
