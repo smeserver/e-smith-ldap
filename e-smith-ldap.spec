@@ -32,8 +32,7 @@ e-smith server and gateway software - LDAP module.
 * Sat Jul 5 2008 Jonathan Martens <smeserver-contribs@snetram.nl> 1.12.0-10
 - Add common <base> tags to e-smith-formmagick's general [SME: 4279]
 
-* Tue Apr 1 2008 Shad L. Lords <slords@mail.com> 
-4.12.0-9
+* Tue Apr 1 2008 Shad L. Lords <slords@mail.com> 4.12.0-9
 - Add free/busy URL entry to help kronolith contribs [SME: 1806]
 
 * Wed Feb 13 2008 Stephen Noble <support@dungog.net> 1.12.0-8
