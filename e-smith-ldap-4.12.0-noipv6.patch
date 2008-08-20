@@ -1,9 +1,0 @@
-diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-4.12.0/root/var/service/ldap/run mezzanine_patched_e-smith-ldap-4.12.0/root/var/service/ldap/run
---- e-smith-ldap-4.12.0/root/var/service/ldap/run	2006-03-15 16:17:43.000000000 -0500
-+++ mezzanine_patched_e-smith-ldap-4.12.0/root/var/service/ldap/run	2006-09-28 10:14:53.000000000 -0400
-@@ -26,4 +26,4 @@
- fi
- 
- # Now run daemon
--exec /usr/sbin/slapd -u ldap -d 0
-+exec /usr/sbin/slapd -4 -u ldap -d 0

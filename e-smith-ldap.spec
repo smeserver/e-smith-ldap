@@ -1,22 +1,13 @@
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
-%define version 4.12.0
-%define release 11
+%define version 4.13.0
+%define release 1
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
 Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
-Patch0: e-smith-ldap-4.12.0-noipv6.patch
-Patch1: e-smith-ldap-4.12.0-slapd.conf.perms.patch
-Patch2: e-smith-ldap-4.12.0-success.patch
-Patch3: e-smith-ldap-4.12.0-pid_args_files.patch
-Patch4: e-smith-ldap-4.12.0-objectClass.patch
-Patch5: e-smith-ldap-4.12.0-tags2general.patch
-Patch6: e-smith-ldap-4.12.0-freebusy.patch
-Patch7: e-smith-ldap-4.12.0-add2general.patch
-Patch8: e-smith-ldap-4.12.0-2739schema.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -30,6 +21,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Aug 20 2008 Shad L. Lords <slords@mail.com> 1.13.0-1
+- Roll new dev stream.
+
 * Fri Jul 25 2008 Shad L. Lords <slords@mail.com> 1.12.0-11
 - Separate template to avoid breaking schema [SME: 4171]
 
@@ -674,15 +668,6 @@ e-smith server and gateway software - LDAP module.
 
 %prep
 %setup
-%patch0 -p1
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
-%patch8 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
