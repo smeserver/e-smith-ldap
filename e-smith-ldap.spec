@@ -21,19 +21,19 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
-* Wed Aug 20 2008 Shad L. Lords <slords@mail.com> 1.13.0-1
+* Wed Aug 20 2008 Shad L. Lords <slords@mail.com> 4.13.0-1
 - Roll new dev stream.
 
-* Fri Jul 25 2008 Shad L. Lords <slords@mail.com> 1.12.0-11
+* Fri Jul 25 2008 Shad L. Lords <slords@mail.com> 4.12.0-11
 - Separate template to avoid breaking schema [SME: 4171]
 
-* Sat Jul 5 2008 Jonathan Martens <smeserver-contribs@snetram.nl> 1.12.0-10
+* Sat Jul 5 2008 Jonathan Martens <smeserver-contribs@snetram.nl> 4.12.0-10
 - Add common <base> tags to e-smith-formmagick's general [SME: 4279]
 
 * Tue Apr 1 2008 Shad L. Lords <slords@mail.com> 4.12.0-9
 - Add free/busy URL entry to help kronolith contribs [SME: 1806]
 
-* Wed Feb 13 2008 Stephen Noble <support@dungog.net> 1.12.0-8
+* Wed Feb 13 2008 Stephen Noble <support@dungog.net> 4.12.0-8
 - Remove <base> tags now in general [SME: 3919]
 
 * Tue Jun 26 2007 Charlie Brady <charlie_brady@mitel.com>
