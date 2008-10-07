@@ -1,7 +1,9 @@
+# $Id: e-smith-ldap.spec,v 1.11 2008/10/07 18:40:10 slords Exp $
+
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
-%define version 4.13.0
+%define version 5.2.0
 %define release 1
 Version: %{version}
 Release: %{release}%{?dist}
@@ -21,6 +23,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Tue Oct 7 2008 Shad L. Lords <slords@mail.com> 5.2.0-1.sme
+- Roll new stream to separate sme7/sme8 trees [SME: 4633]
+
 * Wed Aug 20 2008 Shad L. Lords <slords@mail.com> 4.13.0-1
 - Roll new dev stream.
 
