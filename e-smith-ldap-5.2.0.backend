@@ -1,0 +1,167 @@
+diff -ruN e-smith-ldap-5.2.0/createlinks e-smith-ldap-5.2.0.xx/createlinks
+--- e-smith-ldap-5.2.0/createlinks	2006-03-15 16:17:43.000000000 -0500
++++ e-smith-ldap-5.2.0.xx/createlinks	2009-01-27 19:20:42.000000000 -0500
+@@ -13,8 +13,6 @@
+ 	));
+ }
+ 
+-templates2events("/home/e-smith/db/ldap/ldif", "bootstrap-console-save");
+-
+ event_link("ldap-update", "group-create", "25");
+ event_link("ldap-delete", "group-delete", "25");
+ event_link("ldap-update", "user-create", "25");
+diff -ruN e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/50database e-smith-ldap-5.2.0.xx/root/etc/e-smith/templates/etc/openldap/slapd.conf/50database
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/50database	2002-03-25 14:17:42.000000000 -0500
++++ e-smith-ldap-5.2.0.xx/root/etc/e-smith/templates/etc/openldap/slapd.conf/50database	2009-01-27 19:20:42.000000000 -0500
+@@ -1 +1 @@
+-database	ldbm
++database	bdb
+diff -ruN e-smith-ldap-5.2.0/root/etc/e-smith/templates/var/lib/ldap/DB_CONFIG/10memory e-smith-ldap-5.2.0.xx/root/etc/e-smith/templates/var/lib/ldap/DB_CONFIG/10memory
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/var/lib/ldap/DB_CONFIG/10memory	1969-12-31 19:00:00.000000000 -0500
++++ e-smith-ldap-5.2.0.xx/root/etc/e-smith/templates/var/lib/ldap/DB_CONFIG/10memory	2009-01-27 19:20:42.000000000 -0500
+@@ -0,0 +1,4 @@
++#
++# Set the database in memory cache size.
++#
++set_cachesize   0       2097152        0
+diff -ruN e-smith-ldap-5.2.0/root/etc/e-smith/templates/var/lib/ldap/DB_CONFIG/30logs e-smith-ldap-5.2.0.xx/root/etc/e-smith/templates/var/lib/ldap/DB_CONFIG/30logs
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/var/lib/ldap/DB_CONFIG/30logs	1969-12-31 19:00:00.000000000 -0500
++++ e-smith-ldap-5.2.0.xx/root/etc/e-smith/templates/var/lib/ldap/DB_CONFIG/30logs	2009-01-27 19:20:42.000000000 -0500
+@@ -0,0 +1,8 @@
++#
++# Set log values.
++#
++set_lg_regionmax        1048576
++set_lg_max              10485760
++set_lg_bsize            2097152
++set_lg_dir              /var/log/bdb
++
+diff -ruN e-smith-ldap-5.2.0/root/var/service/ldap/convert_ldif e-smith-ldap-5.2.0.xx/root/var/service/ldap/convert_ldif
+--- e-smith-ldap-5.2.0/root/var/service/ldap/convert_ldif	1969-12-31 19:00:00.000000000 -0500
++++ e-smith-ldap-5.2.0.xx/root/var/service/ldap/convert_ldif	2009-01-27 19:20:42.000000000 -0500
+@@ -0,0 +1,57 @@
++#! /usr/bin/perl
++
++use strict;
++use warnings;
++
++
++use Net::LDAP::LDIF;
++use esmith::util;
++
++my $old = shift;
++my $new = shift;
++
++my $ldif = Net::LDAP::LDIF->new( "/dev/stdin", "r", onerror => 'undef' );
++my $writer = Net::LDAP::LDIF->new("/dev/stdout", "w", onerror => 'undef' );
++
++$new = esmith::util::ldapBase($new);
++$old = esmith::util::ldapBase($old);
++
++while( not $ldif->eof())
++{
++    my $entry = $ldif->read_entry();
++    if ($ldif->error())
++    {
++        print "Error msg: ", $ldif->error(), "\n";
++        print "Error lines:\n", $ldif->error_lines(), "\n";
++        next;
++    }
++    next unless $entry;
++    my $dn = $entry->dn;
++    my @object_classes = $entry->get_value('objectClass');
++    my %object_classes = map { $_ => 1 } @object_classes;
++    if ($dn eq $old)
++    {
++        # this is the domain container object - objectClasses will be
++        # 'top' and 'domain'
++        my $dc = $new;
++        $dc =~ s/,.*//g;
++        $dc =~ s/^dc=//;
++        $entry->replace(dc => $dc);
++    }
++    if ($object_classes{group})
++    {
++        # We used to create group entries with invalid objectClass group
++        # - fix these if we find them
++        # possibly not required any more, but harmless
++        @object_classes = grep { $_ ne 'group' } @object_classes;
++        $entry->replace(objectClass => [ @object_classes, 'posixGroup' ] );
++    }
++    # do any other object transformations
++
++    # Update basedb suffix
++    $dn =~ s/$old$/$new/;
++    $entry->dn($dn);
++    $writer->write($entry);
++}
++$ldif->done( );
++
+diff -ruN e-smith-ldap-5.2.0/root/var/service/ldap/run e-smith-ldap-5.2.0.xx/root/var/service/ldap/run
+--- e-smith-ldap-5.2.0/root/var/service/ldap/run	2008-08-20 17:26:21.000000000 -0400
++++ e-smith-ldap-5.2.0.xx/root/var/service/ldap/run	2009-01-27 19:20:42.000000000 -0500
+@@ -1,28 +1,52 @@
+ #! /bin/sh
+ 
+ domain=$(/sbin/e-smith/config get DomainName)
++old_domain=$(readlink ldif)
++
++if [ -n "$old_domain" ]
++then
++    old_domain=$(basename $old_domain | sed s/.ldif//)
++    old_ldif="/home/e-smith/db/ldap/$old_domain.ldif"
++fi
++
+ ldif="/home/e-smith/db/ldap/$domain.ldif"
+ 
+-if [ -e ldif ]
++if [ "$old_domain" != "$domain" ]
+ then
+-    old_ldif=$(readlink ldif)
+-    if [ "$old_ldif" != "$ldif" ]
+-    then
+-	# The domain name has changed, so we need to delete
+-	# the old directory contents. We still have the old
+-	# dump.
+-	find /var/lib/ldap -type f | xargs rm -f
+-    fi
++    # The domain name has changed, so we need to delete
++    # the old directory contents. We still have the old
++    # dump.
++    find /var/lib/ldap -type f | xargs rm -f
++fi
++
++if [ -f /var/lib/ldap/nextid.dbb ]
++then
++    # We are upgrading from an earlier version which used
++    # ldbm backend format. Delete the backend files, and
++    # restore from ldif
++    find /var/lib/ldap -type f | xargs rm -f
+ fi
+ 
+ # Set up symlink for ldap dump at shutdown
+ ln -sf $ldif ./ldif
+ 
++/sbin/e-smith/expand-template /var/lib/ldap/DB_CONFIG
++
+ # Prime directory if required
+-if [ \! -f /var/lib/ldap/nextid.dbb -a -f $ldif ]
++if [ \! -f /var/lib/ldap/id2entry.bdb ]
+ then
+-    sed 's/objectClass: group/objectClass: posixGroup/' < $ldif | \
+-      setuidgid ldap slapadd -c
++    if [ -e "$old_ldif" ]
++    then
++        perl ./convert_ldif $old_domain $domain < $old_ldif | \
++            setuidgid ldap slapadd -c
++    else
++        if [ \! -e "$ldif" ]
++        then
++            /sbin/e-smith/expand-template /home/e-smith/db/ldap/ldif
++            ldif="/home/e-smith/db/ldap/ldif"
++        fi
++        setuidgid ldap slapadd -c < $ldif
++    fi
+ fi
+ 
+ # Now run daemon

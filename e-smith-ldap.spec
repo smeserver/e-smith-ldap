@@ -1,15 +1,16 @@
-# $Id: e-smith-ldap.spec,v 1.11 2008/10/07 18:40:10 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.12 2009/01/28 04:04:18 charliebrady Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 1
+%define release 2
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
 Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
+Patch0: %{name}-%{version}.backend
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -23,6 +24,10 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Tue Jan 27 2009 Charlie Brady <charlie_brady@mitel.com> 5.2.0-2.sme
+- Change ldap backend to bdb, and fix initialisation problem.
+  [SME: 3018, 2859]
+
 * Tue Oct 7 2008 Shad L. Lords <slords@mail.com> 5.2.0-1.sme
 - Roll new stream to separate sme7/sme8 trees [SME: 4633]
 
@@ -673,6 +678,7 @@ e-smith server and gateway software - LDAP module.
 
 %prep
 %setup
+%patch0 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
@@ -694,6 +700,7 @@ rm -rf $RPM_BUILD_ROOT
 rm -f %{name}-%{version}-%{release}-filelist
 /sbin/e-smith/genfilelist $RPM_BUILD_ROOT \
     --file /var/service/ldap/run 'attr(0750,root,root)' \
+    --file /var/service/ldap/convert_ldif 'attr(0750,root,root)' \
     --file /var/service/ldap/finish 'attr(0750,root,root)' \
     > %{name}-%{version}-%{release}-filelist
 echo "%doc COPYING" >> %{name}-%{version}-%{release}-filelist
