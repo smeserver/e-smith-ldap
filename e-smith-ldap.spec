@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.12 2009/01/28 04:04:18 charliebrady Exp $
+# $Id: e-smith-ldap.spec,v 1.13 2009/02/09 00:00:30 charliebrady Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 2
+%define release 3
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -24,6 +24,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sun Feb  8 2009 Charlie Brady <charlie_brady@mitel.com> 5.2.0-3.sme
+- Create bdb log directory. [SME: 3018]
+
 * Tue Jan 27 2009 Charlie Brady <charlie_brady@mitel.com> 5.2.0-2.sme
 - Change ldap backend to bdb, and fix initialisation problem.
   [SME: 3018, 2859]
@@ -694,6 +697,8 @@ mkdir -p root/service
 ln -s /var/service/ldap root/service/ldap
 touch root/var/service/ldap/down
 
+mkdir -p root/var/log/bdb
+
 %install
 rm -rf $RPM_BUILD_ROOT
 (cd root   ; find . -depth -print | cpio -dump $RPM_BUILD_ROOT)
@@ -702,6 +707,7 @@ rm -f %{name}-%{version}-%{release}-filelist
     --file /var/service/ldap/run 'attr(0750,root,root)' \
     --file /var/service/ldap/convert_ldif 'attr(0750,root,root)' \
     --file /var/service/ldap/finish 'attr(0750,root,root)' \
+    --dir /var/log/bdb 'attr(0700,ldap,ldap)' \
     > %{name}-%{version}-%{release}-filelist
 echo "%doc COPYING" >> %{name}-%{version}-%{release}-filelist
 
