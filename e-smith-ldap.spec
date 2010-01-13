@@ -1,16 +1,18 @@
-# $Id: e-smith-ldap.spec,v 1.13 2009/02/09 00:00:30 charliebrady Exp $
+# $Id: e-smith-ldap.spec,v 1.14 2010/01/13 16:01:11 filippocarletti Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 3
+%define release 4
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
 Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
 Patch0: %{name}-%{version}.backend
+Patch1: %{name}-%{version}-schema.patch
+Patch2: %{name}-%{version}-convert_ldif.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -24,6 +26,10 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Jan 13 2010 Filippo Carletti <filippo.carletti@gmail.com> 5.2.0-4.sme
+- Update schema for newer openldap and remove calFBurl [SME: 5159]
+- Convert ldif dump [SME: 5446]
+
 * Sun Feb  8 2009 Charlie Brady <charlie_brady@mitel.com> 5.2.0-3.sme
 - Create bdb log directory. [SME: 3018]
 
@@ -682,6 +688,8 @@ e-smith server and gateway software - LDAP module.
 %prep
 %setup
 %patch0 -p1
+%patch1 -p1
+%patch2 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

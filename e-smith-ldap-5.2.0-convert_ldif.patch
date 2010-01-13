@@ -1,0 +1,17 @@
+--- e-smith-ldap-5.2.0-old/root/var/service/ldap/run	2010-01-08 21:42:06.000000000 +0100
++++ e-smith-ldap-5.2.0/root/var/service/ldap/run	2010-01-08 23:55:15.000000000 +0100
+@@ -37,13 +37,13 @@
+ then
+     if [ -e "$old_ldif" ]
+     then
++        grep -q "objectClass: dcObject" "$ldif" || /sbin/e-smith/expand-template /home/e-smith/db/ldap/ldif
+         perl ./convert_ldif $old_domain $domain < $old_ldif | \
+             setuidgid ldap slapadd -c
+     else
+         if [ \! -e "$ldif" ]
+         then
+             /sbin/e-smith/expand-template /home/e-smith/db/ldap/ldif
+-            ldif="/home/e-smith/db/ldap/ldif"
+         fi
+         setuidgid ldap slapadd -c < $ldif
+     fi
