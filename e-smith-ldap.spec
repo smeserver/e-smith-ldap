@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.14 2010/01/13 16:01:11 filippocarletti Exp $
+# $Id: e-smith-ldap.spec,v 1.15 2010/01/27 14:02:50 filippocarletti Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 4
+%define release 5
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -13,6 +13,8 @@ Source: %{name}-%{version}.tar.gz
 Patch0: %{name}-%{version}.backend
 Patch1: %{name}-%{version}-schema.patch
 Patch2: %{name}-%{version}-convert_ldif.patch
+Patch3: %{name}-%{version}-password.patch
+Patch4: %{name}-%{version}-tls.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -26,6 +28,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Jan 27 2010 Federico Simoncelli <federico.simoncelli@gmail.com> 5.2.0-5.sme
+- Add ldap authentication and tls support [SME: 5720]
+
 * Wed Jan 13 2010 Filippo Carletti <filippo.carletti@gmail.com> 5.2.0-4.sme
 - Update schema for newer openldap and remove calFBurl [SME: 5159]
 - Convert ldif dump [SME: 5446]
@@ -690,6 +695,8 @@ e-smith server and gateway software - LDAP module.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
+%patch4 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
@@ -706,6 +713,7 @@ ln -s /var/service/ldap root/service/ldap
 touch root/var/service/ldap/down
 
 mkdir -p root/var/log/bdb
+mkdir -p root/var/service/ldap/ssl
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -715,6 +723,7 @@ rm -f %{name}-%{version}-%{release}-filelist
     --file /var/service/ldap/run 'attr(0750,root,root)' \
     --file /var/service/ldap/convert_ldif 'attr(0750,root,root)' \
     --file /var/service/ldap/finish 'attr(0750,root,root)' \
+    --file /var/service/ldap/control/1 'attr(0750,root,root)' \
     --dir /var/log/bdb 'attr(0700,ldap,ldap)' \
     > %{name}-%{version}-%{release}-filelist
 echo "%doc COPYING" >> %{name}-%{version}-%{release}-filelist
