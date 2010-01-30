@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.15 2010/01/27 14:02:50 filippocarletti Exp $
+# $Id: e-smith-ldap.spec,v 1.16 2010/01/30 19:19:19 snetram Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 5
+%define release 6
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -15,6 +15,7 @@ Patch1: %{name}-%{version}-schema.patch
 Patch2: %{name}-%{version}-convert_ldif.patch
 Patch3: %{name}-%{version}-password.patch
 Patch4: %{name}-%{version}-tls.patch
+Patch5: %{name}-%{version}-ldap-update-link-in-user-lock-event.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -28,6 +29,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sat Jan 30 2010 Jonathan Martens <smeserver-contribs@snetram.nl> 5.2.0-6.sme
+- Add ldap-update action script to user-lock event [SME: 5720]
+
 * Wed Jan 27 2010 Federico Simoncelli <federico.simoncelli@gmail.com> 5.2.0-5.sme
 - Add ldap authentication and tls support [SME: 5720]
 
@@ -697,6 +701,7 @@ e-smith server and gateway software - LDAP module.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
