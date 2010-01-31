@@ -1,0 +1,31 @@
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.admin_user	2010-01-30 19:45:06.000000000 +0100
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-01-30 19:51:20.000000000 +0100
+@@ -56,6 +56,7 @@
+ if ($event eq 'ldap-update')
+ {
+     @accounts = ($a->users, $a->groups);
++    push(@accounts, $a->get('admin'));
+ }
+ else
+ {
+@@ -105,7 +106,7 @@
+     my $type = $acct->prop('type');
+     next unless ($type eq 'user' || $type eq 'group');
+     my @attrs = ();
+-    if ($type eq 'user')
++    if (($type eq 'user') || ($key eq 'admin'))
+     {
+ 	my $name = $acct->prop('FirstName') . " " . $acct->prop('LastName');
+ 	utf8::upgrade($name);
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users.admin_user	2010-01-30 19:45:06.000000000 +0100
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users	2010-01-30 19:49:33.000000000 +0100
+@@ -1,5 +1,7 @@
+ {
+-    foreach my $user ($a->users)
++    my @users = $a->users;
++    push (@users,$a->get('admin'));
++    foreach my $user (@users)
+     {
+ 	my $key = $user->key;
+ 	my $first = $user->prop('FirstName') || '';
+

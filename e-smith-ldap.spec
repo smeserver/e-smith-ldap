@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.16 2010/01/30 19:19:19 snetram Exp $
+# $Id: e-smith-ldap.spec,v 1.17 2010/01/31 05:34:48 dungog Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 6
+%define release 7
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -16,6 +16,7 @@ Patch2: %{name}-%{version}-convert_ldif.patch
 Patch3: %{name}-%{version}-password.patch
 Patch4: %{name}-%{version}-tls.patch
 Patch5: %{name}-%{version}-ldap-update-link-in-user-lock-event.patch
+Patch6: %{name}-%{version}-admin_user.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -29,6 +30,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sun Jan 31 2010 Stephen Noble <support@dungog.net> 5.2.0-7.sme
+- Add admin user as a standard user [SME: 5742]
+
 * Sat Jan 30 2010 Jonathan Martens <smeserver-contribs@snetram.nl> 5.2.0-6.sme
 - Add ldap-update action script to user-lock event [SME: 5720]
 
@@ -702,6 +706,7 @@ e-smith server and gateway software - LDAP module.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
