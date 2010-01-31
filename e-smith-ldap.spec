@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.17 2010/01/31 05:34:48 dungog Exp $
+# $Id: e-smith-ldap.spec,v 1.18 2010/01/31 05:41:37 dungog Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 7
+%define release 8
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -17,6 +17,7 @@ Patch3: %{name}-%{version}-password.patch
 Patch4: %{name}-%{version}-tls.patch
 Patch5: %{name}-%{version}-ldap-update-link-in-user-lock-event.patch
 Patch6: %{name}-%{version}-admin_user.patch
+Patch7: %{name}-%{version}-users_groups_ous.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -30,6 +31,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sun Jan 31 2010 Stephen Noble <support@dungog.net> 5.2.0-8.sme
+- Add Groups entries [SME: 5743]
+
 * Sun Jan 31 2010 Stephen Noble <support@dungog.net> 5.2.0-7.sme
 - Add admin user as a standard user [SME: 5742]
 
@@ -707,6 +711,7 @@ e-smith server and gateway software - LDAP module.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
