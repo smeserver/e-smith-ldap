@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.19 2010/02/01 01:07:23 dungog Exp $
+# $Id: e-smith-ldap.spec,v 1.20 2010/02/01 02:08:27 dungog Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 9
+%define release 10
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -15,7 +15,7 @@ Patch1: %{name}-%{version}-schema.patch
 Patch2: %{name}-%{version}-convert_ldif.patch
 Patch3: %{name}-%{version}-password.patch
 Patch4: %{name}-%{version}-tls.patch
-Patch5: %{name}-%{version}-ldap-update-link-in-user-lock-event.patch
+Patch5: %{name}-%{version}-user-lock-event.patch
 Patch6: %{name}-%{version}-admin_user.patch
 Patch7: %{name}-%{version}-users_groups_ous.patch2
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
@@ -31,6 +31,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sun Jan 31 2010 Stephen Noble <support@dungog.net> 5.2.0-10.sme
+- Fix ldap-update action script to user-lock event [SME: 5720]
+
 * Sun Jan 31 2010 Stephen Noble <support@dungog.net> 5.2.0-9.sme
 - Fix Groups entries [SME: 5743]
 
