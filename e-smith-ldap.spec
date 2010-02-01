@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.18 2010/01/31 05:41:37 dungog Exp $
+# $Id: e-smith-ldap.spec,v 1.19 2010/02/01 01:07:23 dungog Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 8
+%define release 9
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -17,7 +17,7 @@ Patch3: %{name}-%{version}-password.patch
 Patch4: %{name}-%{version}-tls.patch
 Patch5: %{name}-%{version}-ldap-update-link-in-user-lock-event.patch
 Patch6: %{name}-%{version}-admin_user.patch
-Patch7: %{name}-%{version}-users_groups_ous.patch
+Patch7: %{name}-%{version}-users_groups_ous.patch2
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -31,6 +31,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sun Jan 31 2010 Stephen Noble <support@dungog.net> 5.2.0-9.sme
+- Fix Groups entries [SME: 5743]
+
 * Sun Jan 31 2010 Stephen Noble <support@dungog.net> 5.2.0-8.sme
 - Add Groups entries [SME: 5743]
 
