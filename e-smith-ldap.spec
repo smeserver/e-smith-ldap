@@ -1,4 +1,4 @@
-# $Id: e-smith-ldap.spec,v 1.23 2010/02/03 09:54:11 dungog Exp $
+# $Id: e-smith-ldap.spec,v 1.24 2010/02/03 09:55:19 dungog Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
@@ -33,7 +33,7 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
-* Sun Jan 31 2010 Stephen Noble <support@dungog.net> 5.2.0-13.sme
+* Wed Feb 3 2010 Stephen Noble <support@dungog.net> 5.2.0-13.sme
 - Fix Groups entries [SME: 5743]
 
 * Wed Feb 3 2010 Stephen Noble <support@dungog.net> 5.2.0-12.sme
