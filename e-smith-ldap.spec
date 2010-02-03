@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.21 2010/02/03 08:59:31 dungog Exp $
+# $Id: e-smith-ldap.spec,v 1.22 2010/02/03 09:26:28 dungog Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 11
+%define release 12
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -19,6 +19,7 @@ Patch5: %{name}-%{version}-user-lock-event.patch
 Patch6: %{name}-%{version}-admin_user.patch
 Patch7: %{name}-%{version}-users_groups_ous.patch2
 Patch8: %{name}-%{version}-attributes.patch
+Patch9: %{name}-%{version}-mailboxRelatedObject.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -32,6 +33,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Feb 3 2010 Stephen Noble <support@dungog.net> 5.2.0-12.sme
+- Separate groups and users with mailboxRelatedObject [SME:5749]
+
 * Wed Feb 3 2010 Stephen Noble <support@dungog.net> 5.2.0-11.sme
 - Set readonly access [SME:5752]
 
@@ -723,6 +727,7 @@ e-smith server and gateway software - LDAP module.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
+%patch9 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
