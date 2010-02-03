@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.22 2010/02/03 09:26:28 dungog Exp $
+# $Id: e-smith-ldap.spec,v 1.23 2010/02/03 09:54:11 dungog Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 12
+%define release 13
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -17,7 +17,7 @@ Patch3: %{name}-%{version}-password.patch
 Patch4: %{name}-%{version}-tls.patch
 Patch5: %{name}-%{version}-user-lock-event.patch
 Patch6: %{name}-%{version}-admin_user.patch
-Patch7: %{name}-%{version}-users_groups_ous.patch2
+Patch7: %{name}-%{version}-users_groups_ous.patch3
 Patch8: %{name}-%{version}-attributes.patch
 Patch9: %{name}-%{version}-mailboxRelatedObject.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
@@ -33,6 +33,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sun Jan 31 2010 Stephen Noble <support@dungog.net> 5.2.0-13.sme
+- Fix Groups entries [SME: 5743]
+
 * Wed Feb 3 2010 Stephen Noble <support@dungog.net> 5.2.0-12.sme
 - Separate groups and users with mailboxRelatedObject [SME:5749]
 
