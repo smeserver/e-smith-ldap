@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.20 2010/02/01 02:08:27 dungog Exp $
+# $Id: e-smith-ldap.spec,v 1.21 2010/02/03 08:59:31 dungog Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 10
+%define release 11
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -18,6 +18,7 @@ Patch4: %{name}-%{version}-tls.patch
 Patch5: %{name}-%{version}-user-lock-event.patch
 Patch6: %{name}-%{version}-admin_user.patch
 Patch7: %{name}-%{version}-users_groups_ous.patch2
+Patch8: %{name}-%{version}-attributes.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -31,6 +32,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Feb 3 2010 Stephen Noble <support@dungog.net> 5.2.0-11.sme
+- Set readonly access [SME:5752]
+
 * Sun Jan 31 2010 Stephen Noble <support@dungog.net> 5.2.0-10.sme
 - Fix ldap-update action script to user-lock event [SME: 5720]
 
@@ -718,6 +722,7 @@ e-smith server and gateway software - LDAP module.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
+%patch8 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

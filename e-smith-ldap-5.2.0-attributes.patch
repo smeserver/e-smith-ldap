@@ -1,0 +1,14 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls	2010-02-02 19:59:43.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls	2010-02-02 19:59:22.000000000 +0100
+@@ -1,8 +1,8 @@
+ access to attrs=userPassword
+-        by self         write
++        by self         read
+         by anonymous    auth
+         by *            none
+ access to *
+-        by self         write
++        by self         read
+         by anonymous    read
+         by *            none
