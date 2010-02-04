@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.25 2010/02/03 10:00:33 dungog Exp $
+# $Id: e-smith-ldap.spec,v 1.26 2010/02/04 11:37:22 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 13
+%define release 14
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -20,6 +20,7 @@ Patch6: %{name}-%{version}-admin_user.patch
 Patch7: %{name}-%{version}-users_groups_ous.patch2
 Patch8: %{name}-%{version}-attributes.patch
 Patch9: %{name}-%{version}-mailboxRelatedObject.patch
+Patch10: %{name}-%{version}-force_ssl_tls_for_auth.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -33,6 +34,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Feb 4 2010 Daniel B. <daniel@firewall-services.com> 5.2.0-14.sme
+- Force SSL/TLS for remote authentication [SME: 5748]
+
 * Wed Feb 3 2010 Stephen Noble <support@dungog.net> 5.2.0-13.sme
 - reuse users_groups_ous.patch2 [SME: 5743]
 
@@ -731,6 +735,7 @@ e-smith server and gateway software - LDAP module.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
+%patch10 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
