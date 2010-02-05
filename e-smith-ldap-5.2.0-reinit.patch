@@ -1,0 +1,18 @@
+diff -urN e-smith-ldap-5.2.0/createlinks e-smith-ldap-5.2.0.new/createlinks
+--- e-smith-ldap-5.2.0/createlinks	2010-02-05 23:20:39.000000000 +1100
++++ e-smith-ldap-5.2.0.new/createlinks	2010-02-05 23:34:06.000000000 +1100
+@@ -32,4 +32,6 @@
+ 
+ event_link("ldap-delete-dumps", "pre-restore", "25");
+ 
++event_link("ldap-reinit", "post-upgrade", "15");
++
+ exit 0;
+diff -urN e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-reinit e-smith-ldap-5.2.0.new/root/etc/e-smith/events/actions/ldap-reinit
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-reinit	1970-01-01 10:00:00.000000000 +1000
++++ e-smith-ldap-5.2.0.new/root/etc/e-smith/events/actions/ldap-reinit	2010-02-05 23:28:27.000000000 +1100
+@@ -0,0 +1,4 @@
++#!/bin/sh
++
++exec rm -rf /var/lib/ldap/*
++
