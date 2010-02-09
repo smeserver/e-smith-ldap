@@ -1,0 +1,13 @@
+diff -Naur e-smith-ldap-5.2.0-old/root/var/service/ldap/run e-smith-ldap-5.2.0/root/var/service/ldap/run
+--- e-smith-ldap-5.2.0-old/root/var/service/ldap/run	2010-02-09 13:26:52.000000000 +0100
++++ e-smith-ldap-5.2.0/root/var/service/ldap/run	2010-02-09 13:33:57.000000000 +0100
+@@ -34,6 +34,9 @@
+ 
+ /sbin/e-smith/expand-template /var/lib/ldap/DB_CONFIG
+ 
++# If the ldif dump is empty it's sme8beta: init ldap
++[ -s "$ldif" ] || rm -f /var/lib/ldap/id2entry.bdb
++
+ # Prime directory if required
+ if [ \! -f /var/lib/ldap/id2entry.bdb ]
+ then

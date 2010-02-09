@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.28 2010/02/06 00:04:19 dungog Exp $
+# $Id: e-smith-ldap.spec,v 1.29 2010/02/09 11:42:54 filippocarletti Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 16
+%define release 17
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -21,6 +21,7 @@ Patch7: %{name}-%{version}-users_groups_ous.patch2
 Patch8: %{name}-%{version}-attributes.patch
 Patch9: %{name}-%{version}-mailboxRelatedObject.patch
 Patch10: %{name}-%{version}-force_ssl_tls_for_auth.patch
+Patch11: %{name}-%{version}-sme8b-db.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -34,6 +35,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Tue Feb  9 2010 Filippo Carletti <filippo.carletti@gmail.com> 5.2.0-17.sme
+- Init database if the ldif dump is empty (ie from sme8b) [SME: 5747]
+
 * Fri Feb 5 2010 Stephen Noble <support@dungog.net> 5.2.0-16.sme
 - revert re-init database [SME:5747]
 
@@ -742,6 +746,7 @@ e-smith server and gateway software - LDAP module.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%patch11 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
