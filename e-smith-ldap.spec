@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.30 2010/03/01 15:33:04 filippocarletti Exp $
+# $Id: e-smith-ldap.spec,v 1.31 2010/03/01 16:58:26 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 18
+%define release 19
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -36,8 +36,11 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Mon Mar  1 2010 Daniel B. <daniel@firewall-services.com> 5.2.0-19.sme
+- Fix bug reference in spec file
+
 * Mon Mar  1 2010 Filippo Carletti <filippo.carletti@gmail.com> 5.2.0-18.sme
-- Fix admin user password change (Daniel B.) [SME: 5742]
+- Fix admin user password change (Daniel B.) [SME: 5810]
 
 * Tue Feb  9 2010 Filippo Carletti <filippo.carletti@gmail.com> 5.2.0-17.sme
 - Init database if the ldif dump is empty (ie from sme8b) [SME: 5747]
