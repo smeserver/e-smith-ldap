@@ -1,0 +1,12 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-03-01 13:45:11.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-03-01 13:44:32.000000000 +0100
+@@ -69,7 +69,7 @@
+ 
+     die "Account $userName is not a user or group account; " .
+ 	    "update LDAP entry failed.\n"
+-	unless (($type eq 'user') || ($type eq 'group'));
++	unless (($type eq 'user') || ($type eq 'group') || ($userName eq 'admin'));
+     @accounts = ($account);
+ }
+ 
