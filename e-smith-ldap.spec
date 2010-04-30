@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.31 2010/03/01 16:58:26 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.32 2010/04/30 15:30:36 filippocarletti Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 19
+%define release 20
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -23,6 +23,7 @@ Patch9: %{name}-%{version}-mailboxRelatedObject.patch
 Patch10: %{name}-%{version}-force_ssl_tls_for_auth.patch
 Patch11: %{name}-%{version}-sme8b-db.patch
 Patch12: %{name}-%{version}-admin_user2.patch
+Patch13: %{name}-%{version}-ibay_password.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -36,6 +37,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Fri Apr 30 2010 Filippo Carletti <filippo.carletti@gmail.com> 5.2.0-20.sme
+- Don't try to save ibay password to ldap [SME: 5906]
+
 * Mon Mar  1 2010 Daniel B. <daniel@firewall-services.com> 5.2.0-19.sme
 - Fix bug reference in spec file
 
@@ -755,6 +759,7 @@ e-smith server and gateway software - LDAP module.
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
+%patch13 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
