@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.32 2010/04/30 15:30:36 filippocarletti Exp $
+# $Id: e-smith-ldap.spec,v 1.33 2010/05/04 16:24:26 snetram Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 20
+%define release 21
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -24,6 +24,7 @@ Patch10: %{name}-%{version}-force_ssl_tls_for_auth.patch
 Patch11: %{name}-%{version}-sme8b-db.patch
 Patch12: %{name}-%{version}-admin_user2.patch
 Patch13: %{name}-%{version}-ibay_password.patch
+Patch14: %{name}-%{version}-fix-indention.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -37,6 +38,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Tue May 4 2010 Jonathan Martens <smeserver-contribs@snetram.nl> 5.2.0-21.sme
+- Fix indentation in S25ldap-update script [SME: 5914]
+
 * Fri Apr 30 2010 Filippo Carletti <filippo.carletti@gmail.com> 5.2.0-20.sme
 - Don't try to save ibay password to ldap [SME: 5906]
 
@@ -760,6 +764,7 @@ e-smith server and gateway software - LDAP module.
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
+%patch14 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

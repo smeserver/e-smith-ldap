@@ -1,0 +1,16 @@
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.clean_spaces	2010-05-04 16:42:18.000000000 +0200
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-05-04 16:43:46.000000000 +0200
+@@ -147,10 +147,10 @@
+     {
+ 	$dn = "cn=$key,ou=Groups,$base";
+ 	my $key = $acct->key;
+-       my $desc = $acct->prop('Description') || '';
++	my $desc = $acct->prop('Description') || '';
+ 	utf8::upgrade($desc);
+-       my @members = split(/,/,($acct->prop('Members') || ''));
+-       my $gid = $acct->prop('Gid');
++	my @members = split(/,/,($acct->prop('Members') || ''));
++	my $gid = $acct->prop('Gid');
+ 
+ 	push @attrs, (objectClass => ['posixGroup','mailboxRelatedObject']);
+ 	push @attrs, (cn => $key);
