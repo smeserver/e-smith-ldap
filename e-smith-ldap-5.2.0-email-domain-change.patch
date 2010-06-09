@@ -1,0 +1,39 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/var/service/ldap/convert_ldif mezzanine_patched_e-smith-ldap-5.2.0/root/var/service/ldap/convert_ldif
+--- e-smith-ldap-5.2.0/root/var/service/ldap/convert_ldif	2010-06-04 00:17:22.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/var/service/ldap/convert_ldif	2010-06-04 00:17:20.000000000 +0200
+@@ -7,14 +7,14 @@
+ use Net::LDAP::LDIF;
+ use esmith::util;
+ 
+-my $old = shift;
+-my $new = shift;
++my $olddomain = shift;
++my $newdomain = shift;
+ 
+ my $ldif = Net::LDAP::LDIF->new( "/dev/stdin", "r", onerror => 'undef' );
+ my $writer = Net::LDAP::LDIF->new("/dev/stdout", "w", onerror => 'undef' );
+ 
+-$new = esmith::util::ldapBase($new);
+-$old = esmith::util::ldapBase($old);
++my $new = esmith::util::ldapBase($newdomain);
++my $old = esmith::util::ldapBase($olddomain);
+ 
+ while( not $ldif->eof())
+ {
+@@ -48,6 +48,16 @@
+     }
+     # do any other object transformations
+ 
++    # Update the mail attributes
++    if ($entry->exists('mail')){
++        my @newmails = ();
++        foreach ($entry->get_value('mail')){
++            $_ =~ s/\@$olddomain$/\@$newdomain/;
++            push (@newmails,$_);
++        }
++        $entry->replace(mail => [ @newmails ]);
++    }
++
+     # Update basedb suffix
+     $dn =~ s/$old$/$new/;
+     $entry->dn($dn);

@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.33 2010/05/04 16:24:26 snetram Exp $
+# $Id: e-smith-ldap.spec,v 1.34 2010/06/09 08:48:08 filippocarletti Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 21
+%define release 22
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -25,6 +25,8 @@ Patch11: %{name}-%{version}-sme8b-db.patch
 Patch12: %{name}-%{version}-admin_user2.patch
 Patch13: %{name}-%{version}-ibay_password.patch
 Patch14: %{name}-%{version}-fix-indention.patch
+Patch15: %{name}-%{version}-email-domain-change.patch
+Patch16: %{name}-%{version}-update-admin.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -38,6 +40,10 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Mon Jun  7 2010 Federico Simoncelli <federico.simoncelli@gmail.com> 5.2.0-22.sme
+- Update email addresses on domain change (thanks Daniel) [SME: 5984]
+- Update admin information (thanks Daniel) [SME: 6014]
+
 * Tue May 4 2010 Jonathan Martens <smeserver-contribs@snetram.nl> 5.2.0-21.sme
 - Fix indentation in S25ldap-update script [SME: 5914]
 
@@ -765,6 +771,8 @@ e-smith server and gateway software - LDAP module.
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
+%patch15 -p1
+%patch16 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

@@ -1,0 +1,23 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/createlinks mezzanine_patched_e-smith-ldap-5.2.0/createlinks
+--- e-smith-ldap-5.2.0/createlinks	2010-06-04 00:32:10.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/createlinks	2010-06-04 00:31:06.000000000 +0200
+@@ -20,6 +20,7 @@
+ event_link("ldap-update", "user-lock", "25");
+ 
+ event_link("ldap-update", "user-modify", "25");
++event_link("ldap-update", "user-modify-admin", "25");
+ event_link("ldap-update", "group-modify", "25");
+ event_link("ldap-update", "password-modify", "25");
+ 
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-06-04 00:32:10.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-06-04 00:31:42.000000000 +0200
+@@ -106,7 +106,7 @@
+ {
+     my $key = $acct->key;
+     my $type = $acct->prop('type');
+-    next unless ($type eq 'user' || $type eq 'group');
++    next unless ($type eq 'user' || $key eq 'admin' || $type eq 'group');
+     my @attrs = ();
+     my $dn = $base;
+     if (($type eq 'user') || ($key eq 'admin'))
