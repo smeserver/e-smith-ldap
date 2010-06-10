@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.34 2010/06/09 08:48:08 filippocarletti Exp $
+# $Id: e-smith-ldap.spec,v 1.35 2010/06/10 19:55:29 snetram Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 22
+%define release 23
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -27,6 +27,7 @@ Patch13: %{name}-%{version}-ibay_password.patch
 Patch14: %{name}-%{version}-fix-indention.patch
 Patch15: %{name}-%{version}-email-domain-change.patch
 Patch16: %{name}-%{version}-update-admin.patch
+Patch17: %{name}-%{version}-empty_group.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -40,6 +41,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Tue Jun 10 2010 Jonathan Martens <smeserver-contribs@snetram.nl> 5.2.0-23.sme
+- Fix ldap-create errors when adding empty groups [SME: 5920]
+
 * Mon Jun  7 2010 Federico Simoncelli <federico.simoncelli@gmail.com> 5.2.0-22.sme
 - Update email addresses on domain change (thanks Daniel) [SME: 5984]
 - Update admin information (thanks Daniel) [SME: 6014]
@@ -773,6 +777,7 @@ e-smith server and gateway software - LDAP module.
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
+%patch17 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
