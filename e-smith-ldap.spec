@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.35 2010/06/10 19:55:29 snetram Exp $
+# $Id: e-smith-ldap.spec,v 1.36 2010/09/22 14:45:12 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 23
+%define release 24
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -41,6 +41,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Sep 22 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-24.sme
+- Restrict access to the ldif file [SME: 6217]
+
 * Tue Jun 10 2010 Jonathan Martens <smeserver-contribs@snetram.nl> 5.2.0-23.sme
 - Fix ldap-create errors when adding empty groups [SME: 5920]
 
@@ -806,6 +809,7 @@ rm -f %{name}-%{version}-%{release}-filelist
     --file /var/service/ldap/finish 'attr(0750,root,root)' \
     --file /var/service/ldap/control/1 'attr(0750,root,root)' \
     --dir /var/log/bdb 'attr(0700,ldap,ldap)' \
+    --dir /home/e-smith/db/ldap 'attr(0750,root,ldap)' \
     > %{name}-%{version}-%{release}-filelist
 echo "%doc COPYING" >> %{name}-%{version}-%{release}-filelist
 
