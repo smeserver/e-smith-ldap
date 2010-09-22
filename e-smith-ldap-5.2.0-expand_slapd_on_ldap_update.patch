@@ -1,0 +1,11 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/createlinks mezzanine_patched_e-smith-ldap-5.2.0/createlinks
+--- e-smith-ldap-5.2.0/createlinks	2010-09-11 13:59:41.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/createlinks	2010-09-11 13:59:21.000000000 +0200
+@@ -10,6 +10,7 @@
+ 	qw(
+ 	    bootstrap-console-save
+ 	    console-save
++	    ldap-update
+ 	));
+ }
+ 

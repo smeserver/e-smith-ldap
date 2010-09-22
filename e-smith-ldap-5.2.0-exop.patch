@@ -1,0 +1,9 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/85passwordHash mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/85passwordHash
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/85passwordHash	1970-01-01 01:00:00.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/85passwordHash	2010-09-06 20:05:51.000000000 +0200
+@@ -0,0 +1,5 @@
++
++# Use md5crypt
++password-hash \{CRYPT\}
++password-crypt-salt-format "$1$%.8s"
++

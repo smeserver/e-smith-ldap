@@ -1,0 +1,32 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls	2010-09-12 15:17:45.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls	1970-01-01 01:00:00.000000000 +0100
+@@ -1,9 +0,0 @@
+-access to attrs=userPassword
+-        by self         read
+-        by anonymous    peername.ip="127.0.0.1" auth
+-        by anonymous    ssf=128 auth
+-        by *            none
+-access to *
+-        by self         read
+-        by anonymous    read
+-        by *            none
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls05userPassword mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls05userPassword
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls05userPassword	1970-01-01 01:00:00.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls05userPassword	2010-09-12 15:16:52.000000000 +0200
+@@ -0,0 +1,6 @@
++access to attrs=userPassword
++        by self         peername.ip="127.0.0.1" read
++        by self         ssf=128 read
++        by anonymous    peername.ip="127.0.0.1" auth
++        by anonymous    ssf=128 auth
++        by *            none
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls99default mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls99default
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls99default	1970-01-01 01:00:00.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls99default	2010-09-12 15:16:02.000000000 +0200
+@@ -0,0 +1,5 @@
++access to *
++        by self         read
++        by anonymous    read
++        by *            none
++

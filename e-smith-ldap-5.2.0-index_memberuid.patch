@@ -1,0 +1,10 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/90indexes mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/90indexes
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/90indexes	2002-03-25 20:17:42.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/90indexes	2010-09-04 00:12:17.000000000 +0200
+@@ -1,5 +1,6 @@
+ # Indices to maintain
+ #index  objectClass                             eq
+ index   objectClass,uid,uidNumber,gidNumber     eq
++index   memberUid                               eq
+ index   cn,mail,surname,givenname               eq,subinitial
+ 

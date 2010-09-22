@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.36 2010/09/22 14:45:12 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.37 2010/09/22 21:35:45 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 24
+%define release 25
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -28,6 +28,12 @@ Patch14: %{name}-%{version}-fix-indention.patch
 Patch15: %{name}-%{version}-email-domain-change.patch
 Patch16: %{name}-%{version}-update-admin.patch
 Patch17: %{name}-%{version}-empty_group.patch
+Patch18: e-smith-ldap-5.2.0-ldap_logs.patch
+Patch19: e-smith-ldap-5.2.0-force_enabled.patch
+Patch20: e-smith-ldap-5.2.0-index_memberuid.patch
+Patch21: e-smith-ldap-5.2.0-expand_slapd_on_ldap_update.patch
+Patch22: e-smith-ldap-5.2.0-split_acl_templates.patch
+Patch23: e-smith-ldap-5.2.0-exop.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -41,6 +47,14 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Sep 22 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-25.sme
+- Send slapd logs in /var/log/ldap (multilog) [SME: 6222]
+- Force the service to be enabled [SME: 6221]
+- Indexe memberUid attribute [SME: 6220]
+- Expand slapd.conf during ldap-update event [SME: ????]
+- Split slapd ACL template [SME: ????]
+- Use md5crypt hash when client requests exop [SME: 6223]
+
 * Wed Sep 22 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-24.sme
 - Restrict access to the ldif file [SME: 6217]
 
@@ -781,6 +795,12 @@ e-smith server and gateway software - LDAP module.
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
+%patch18 -p1
+%patch19 -p1
+%patch20 -p1
+%patch21 -p1
+%patch22 -p1
+%patch23 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
@@ -797,6 +817,7 @@ ln -s /var/service/ldap root/service/ldap
 touch root/var/service/ldap/down
 
 mkdir -p root/var/log/bdb
+mkdir -p root/var/log/ldap
 mkdir -p root/var/service/ldap/ssl
 
 %install
@@ -805,11 +826,13 @@ rm -rf $RPM_BUILD_ROOT
 rm -f %{name}-%{version}-%{release}-filelist
 /sbin/e-smith/genfilelist $RPM_BUILD_ROOT \
     --file /var/service/ldap/run 'attr(0750,root,root)' \
+    --file /var/service/ldap/log/run 'attr(0750,root,root)' \
     --file /var/service/ldap/convert_ldif 'attr(0750,root,root)' \
     --file /var/service/ldap/finish 'attr(0750,root,root)' \
     --file /var/service/ldap/control/1 'attr(0750,root,root)' \
     --dir /var/log/bdb 'attr(0700,ldap,ldap)' \
     --dir /home/e-smith/db/ldap 'attr(0750,root,ldap)' \
+    --dir /var/log/ldap 'attr(0750,smelog,smelog)' \
     > %{name}-%{version}-%{release}-filelist
 echo "%doc COPYING" >> %{name}-%{version}-%{release}-filelist
 
