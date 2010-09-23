@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.38 2010/09/23 08:03:01 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.39 2010/09/23 14:01:53 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 25
+%define release 26
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -34,6 +34,7 @@ Patch20: e-smith-ldap-5.2.0-index_memberuid.patch
 Patch21: e-smith-ldap-5.2.0-expand_slapd_on_ldap_update.patch
 Patch22: e-smith-ldap-5.2.0-split_acl_templates.patch
 Patch23: e-smith-ldap-5.2.0-exop.patch
+Patch24: e-smith-ldap-5.2.0-dump_ldif.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -47,6 +48,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Sep 23 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-26.sme
+- Dump ldap data during the pre-backup event [SME: 6226]
+
 * Wed Sep 22 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-25.sme
 - Send slapd logs in /var/log/ldap (multilog) [SME: 6222]
 - Force the service to be enabled [SME: 6221]
@@ -801,6 +805,7 @@ e-smith server and gateway software - LDAP module.
 %patch21 -p1
 %patch22 -p1
 %patch23 -p1
+%patch24 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

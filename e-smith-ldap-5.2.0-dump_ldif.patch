@@ -1,0 +1,12 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/createlinks mezzanine_patched_e-smith-ldap-5.2.0/createlinks
+--- e-smith-ldap-5.2.0/createlinks	2010-09-11 13:53:45.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/createlinks	2010-09-11 13:53:23.000000000 +0200
+@@ -24,6 +24,8 @@
+ event_link("ldap-update", "group-modify", "25");
+ event_link("ldap-update", "password-modify", "25");
+ 
++event_link("ldap-dump", "pre-backup", "30");
++
+ event_link("ldap-update",   "ldap-update", "80");
+ templates2events("/etc/rc.d/init.d/masq", "ldap-update");
+ templates2events("/etc/hosts.allow", "ldap-update");
