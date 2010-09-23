@@ -1,0 +1,107 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-23 19:44:01.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-23 19:43:59.000000000 +0200
+@@ -80,8 +80,21 @@
+ #------------------------------------------------------------
+ my $pw = esmith::util::LdapPassword();
+ my %passwd;
+-
+-while(my ($key,$pwd) = getpwent()) { $passwd{$key} = "{CRYPT}$pwd"; }
++my %uid;
++my %gid;
++my %home;
++my %shell;
++
++while(my ($key,$pwd,$uid,$gid,
++          undef,undef,undef,
++          $home,$shell) = getpwent()) {
++
++    $passwd{$key} = "{CRYPT}$pwd";
++    $uid{$key} = $uid;
++    $gid{$key} = $gid;
++    $home{$key} = $home;
++    $shell{$key} = $shell;
++}
+ endpwent();
+ 
+ #------------------------------------------------------------
+@@ -129,7 +142,12 @@
+ 	utf8::upgrade($street);
+ 	my $password = $passwd{$key} || '';
+ 	utf8::upgrade($password);
+-	push @attrs, (objectClass => 'inetOrgPerson');
++	my $uid = $uid{$key} || '';
++	my $gid = $gid{$key} || '';
++	my $home = $home{$key} || '';
++	my $shell = $shell{$key} || '';
++
++	push @attrs, (objectClass => ['inetOrgPerson', 'posixAccount']);
+ 	push @attrs, (uid => $key);
+ 
+ 	push @attrs, (cn => $name) unless ($name =~ /^\s*$/);
+@@ -142,6 +160,10 @@
+ 	push @attrs, (l => $city) unless $city =~ /^\s*$/;
+ 	push @attrs, (street => $street) unless $street =~ /^\s*$/;
+ 	push @attrs, (userPassword => $password) unless $password =~ /^\s*$/;
++	push @attrs, (uidNumber => $uid) unless $uid =~ /^\s*$/;
++	push @attrs, (gidNumber => $gid) unless $gid =~ /^\s*$/;
++	push @attrs, (homeDirectory => $home) unless $home =~ /^\s*$/;
++	push @attrs, (loginShell => $shell) unless $shell =~ /^\s*$/;
+     }
+     elsif ($type eq 'group')
+     {
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users	2010-09-23 19:44:01.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users	2010-09-23 19:25:45.000000000 +0200
+@@ -12,11 +12,16 @@
+ 	my $dept = $user->prop('Dept');
+ 	my $city = $user->prop('City');
+ 	my $street = $user->prop('Street');
++	my $uid = $uid{$key};
++	my $gid = $gid{$key};
+ 	my $password = $passwd{$key};
++	my $home = $home{$key};
++	my $shell = $shell{$key};
+ 
+ 	$OUT .= "\n";
+ 	$OUT .= utf8("dn: uid=$key,ou=Users,$ldapBase\n");
+ 	$OUT .= utf8("objectClass: inetOrgPerson\n");
++	$OUT .= utf8("objectClass: posixAccount\n");
+ 	$OUT .= utf8("uid: $key\n");
+ 	$OUT .= utf8("cn: $name\n") if $name;
+ 	$OUT .= utf8("givenName: $first\n") if $first;
+@@ -28,5 +33,9 @@
+ 	$OUT .= utf8("l: $city\n") if $city;
+ 	$OUT .= utf8("street: $street\n") if $street;
+ 	$OUT .= utf8("userPassword: $password\n") if $password;
++	$OUT .= utf8("uidNumber: $uid\n") if $uid;
++	$OUT .= utf8("gidNumber: $gid\n") if $gid;
++	$OUT .= utf8("homeDirectory: $home\n") if $home;
++	$OUT .= utf8("loginShell: $shell\n") if $shell;
+     }
+ }
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-09-23 19:44:01.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-09-23 19:41:51.000000000 +0200
+@@ -12,7 +12,20 @@
+     }
+ 
+     %passwd = ();
+-    while(my ($key,$pwd) = getpwent()) { $passwd{$key} = "{CRYPT}$pwd"; }
++    %uid = ();
++    %gid = ();
++    %home = ();
++    %shell = ();
++    while(my ($key,$pwd,$uid,$gid,
++              undef,undef,undef,
++              $dir,$shell) = getpwent()) {
++
++        $passwd{$key} = "{CRYPT}$pwd";
++        $uid{$key} = $uid;
++        $gid{$key} = $gid;
++        $home{$key} = $dir;
++        $shell{$key} = $shell;
++    }
+     endpwent();
+ 
+     $OUT = "";
