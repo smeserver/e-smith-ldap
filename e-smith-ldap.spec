@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.41 2010/09/23 17:57:34 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.42 2010/09/23 20:03:54 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 28
+%define release 29
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -37,6 +37,7 @@ Patch23: e-smith-ldap-5.2.0-exop.patch
 Patch24: e-smith-ldap-5.2.0-dump_ldif.patch
 Patch25: e-smith-ldap-5.2.0-add_computers_ou.patch
 Patch26: e-smith-ldap-5.2.0-add_posixaccount_attr_in_ldap.patch
+Patch27: e-smith-ldap-5.2.0-full_path_to_config.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -50,6 +51,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Sep 23 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-29.sme
+- Use full path to config in the run script [SME: 6222]
+
 * Thu Sep 23 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-28.sme
 - Add posixAccount attributes in LDAP [SME: 6074]
 
@@ -816,6 +820,7 @@ e-smith server and gateway software - LDAP module.
 %patch24 -p1
 %patch25 -p1
 %patch26 -p1
+%patch27 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

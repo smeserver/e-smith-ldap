@@ -1,0 +1,11 @@
+--- e-smith-ldap-5.2.0/root/var/service/ldap/run.full_path_to_config	2010-09-23 21:57:53.000000000 +0200
++++ e-smith-ldap-5.2.0/root/var/service/ldap/run	2010-09-23 21:58:33.000000000 +0200
+@@ -5,7 +5,7 @@
+ domain=$(/sbin/e-smith/config get DomainName)
+ old_domain=$(readlink ldif)
+ 
+-loglevel=$(config getprop ldap LogLevel || echo 256)
++loglevel=$(/sbin/e-smith/config getprop ldap LogLevel || echo 256)
+ 
+ ./control/1
+ 
