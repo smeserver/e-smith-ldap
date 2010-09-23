@@ -1,0 +1,54 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/var/service/ldap/log/run mezzanine_patched_e-smith-ldap-5.2.0/root/var/service/ldap/log/run
+--- e-smith-ldap-5.2.0/root/var/service/ldap/log/run	1970-01-01 01:00:00.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/var/service/ldap/log/run	2010-09-22 20:23:20.000000000 +0200
+@@ -0,0 +1,28 @@
++#!/bin/sh
++
++#----------------------------------------------------------------------
++# copyright (C) 2010 Firewall-Services
++# daniel@firewall-services.com
++# 
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 2 of the License, or
++# (at your option) any later version.
++#               
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#               
++# You should have received a copy of the GNU General Public License
++# along with this program; if not, write to the Free Software
++# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
++# 
++# Technical support for this program is available from Mitel Networks 
++# Please visit our web site www.mitel.com/sme/ for details.
++#----------------------------------------------------------------------
++exec                                    \
++    /usr/local/bin/setuidgid smelog       \
++    /usr/local/bin/multilog t s16777215 n20 \
++    /var/log/ldap
++
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/var/service/ldap/run mezzanine_patched_e-smith-ldap-5.2.0/root/var/service/ldap/run
+--- e-smith-ldap-5.2.0/root/var/service/ldap/run	2010-09-22 20:24:19.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/var/service/ldap/run	2010-09-22 20:24:04.000000000 +0200
+@@ -1,8 +1,12 @@
+ #! /bin/sh
+ 
++exec 2>&1
++
+ domain=$(/sbin/e-smith/config get DomainName)
+ old_domain=$(readlink ldif)
+ 
++loglevel=$(config getprop ldap LogLevel || echo 256)
++
+ ./control/1
+ 
+ if [ -n "$old_domain" ]
+@@ -55,4 +59,4 @@
+ fi
+ 
+ # Now run daemon
+-exec /usr/sbin/slapd -4 -u ldap -d 0 -h "ldap:/// ldaps:/// ldapi:///"
++exec /usr/sbin/slapd -4 -u ldap -d $loglevel -s 0 -h "ldap:/// ldaps:/// ldapi:///"
