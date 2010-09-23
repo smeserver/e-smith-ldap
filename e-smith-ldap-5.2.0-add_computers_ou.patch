@@ -1,0 +1,13 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/10organisation mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/10organisation
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/10organisation	2010-09-23 17:14:13.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/10organisation	2010-09-23 17:13:54.000000000 +0200
+@@ -18,5 +18,9 @@
+     $OUT .= "objectClass: top\n";
+     $OUT .= "objectClass: organizationalUnit\n";
+     $OUT .= "ou: Groups\n\n";
++    $OUT .= "dn: ou=Computers,$ldapBase\n";
++    $OUT .= "objectClass: top\n";
++    $OUT .= "objectClass: organizationalUnit\n";
++    $OUT .= "ou: Computers\n\n";
+ }
+ 
