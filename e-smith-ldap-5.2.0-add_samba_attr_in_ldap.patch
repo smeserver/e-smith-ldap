@@ -1,0 +1,197 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-24 18:47:32.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-24 16:15:45.000000000 +0200
+@@ -97,6 +97,41 @@
+ }
+ endpwent();
+ 
++# Now parse samba info
++# We want to copy all this into LDAP
++# so it'll be easier to switch to real LDAP auth later
++my %lmpass;
++my %ntpass;
++my %smbflag;
++my %smblct;
++my %smbsid;
++my %smbpgsid;
++
++# First, parse users data
++foreach my $line (`/usr/bin/pdbedit -Lw`){
++    my ($key,undef,$lmpass,$ntpass,$smbflag,$smblct) = split(/:/,$line);
++    $lmpass{$key} = $lmpass;
++    $ntpass{$key} = $ntpass;
++    $smbflag{$key} = $smbflag;
++    $smblct =~ s/LCT\-//;
++    $smblct{$key} = hex($smblct);
++    foreach my $info (`/usr/bin/pdbedit -v $key`){
++        $smbsid{$key} = $1 if ($info =~ m/User SID:\s+(S-.*)/);
++        $smbpgsid{$key} = $1 if ($info =~ m/Primary Group SID:\s+(S-.*)/);
++    }
++}
++
++# Now, parse groupmaps data
++foreach (`/usr/bin/net groupmap list`){
++    chomp;
++    next unless (/^(.*?) \((S-.*-\d+)\) -> (.*)$/);
++    my ($desc, $smbsid, $key) = ($1, $2, $3);
++    # We only want group sid
++    my $account = $a->get($key) || next;
++    next unless ($account->prop('type') eq 'group');
++    $smbsid{$key} = $smbsid;
++}
++
+ #------------------------------------------------------------
+ # Update LDAP database entry.
+ #------------------------------------------------------------
+@@ -146,8 +181,14 @@
+ 	my $gid = $gid{$key} || '';
+ 	my $home = $home{$key} || '';
+ 	my $shell = $shell{$key} || '';
++	my $lmpass = $lmpass{$key} || '';
++	my $ntpass = $ntpass{$key} || '';
++	my $smbflag = $smbflag{$key} || '';
++	my $smblct = $smblct{$key} || '';
++	my $smbsid = $smbsid{$key} || '';
++	my $smbpgsid = $smbpgsid{$key} || '';
+ 
+-	push @attrs, (objectClass => ['inetOrgPerson', 'posixAccount']);
++	push @attrs, (objectClass => ['inetOrgPerson', 'posixAccount', 'sambaSamAccount']);
+ 	push @attrs, (uid => $key);
+ 
+ 	push @attrs, (cn => $name) unless ($name =~ /^\s*$/);
+@@ -164,6 +205,12 @@
+ 	push @attrs, (gidNumber => $gid) unless $gid =~ /^\s*$/;
+ 	push @attrs, (homeDirectory => $home) unless $home =~ /^\s*$/;
+ 	push @attrs, (loginShell => $shell) unless $shell =~ /^\s*$/;
++	push @attrs, (sambaLMPassword => $lmpass) unless $lmpass =~ /^\s*$/;
++	push @attrs, (sambaNTPassword => $ntpass) unless $ntpass =~ /^\s*$/;
++	push @attrs, (sambaAcctFlags => $smbflag) unless $smbflag =~ /^\s*$/;
++	push @attrs, (sambaPwdLastSet => $smblct) unless $smblct =~ /^\s*$/;
++	push @attrs, (sambaSID => $smbsid) unless $smbsid =~ /^\s*$/;
++	push @attrs, (sambaPrimaryGroupSID => $smbpgsid) unless $smbpgsid =~ /^\s*$/;
+     }
+     elsif ($type eq 'group')
+     {
+@@ -173,14 +220,19 @@
+ 	utf8::upgrade($desc);
+ 	my @members = split(/,/,($acct->prop('Members') || ''));
+ 	my $gid = $acct->prop('Gid');
++	my $smbsid = $smbsid{$key};
+ 
+-	push @attrs, (objectClass => ['posixGroup','mailboxRelatedObject']);
++	push @attrs, (objectClass => ['posixGroup','mailboxRelatedObject','sambaGroupMapping']);
+ 	push @attrs, (cn => $key);
+ 	push @attrs, (mail => "$key\@$domain");
+ 	push @attrs, (gidNumber => $gid);
+ 	push @attrs, (description => $desc) unless $desc =~ /^\s*$/;
+ 	push @attrs, (memberUid => \@members) 
+ 	    unless ((scalar @members == 0) && ($event eq 'group-create'));
++	# Samba requires the displayName attribute
++	push @attrs, (displayName => $desc) unless $desc =~ /^\s*$/;
++	push @attrs, (sambaGroupType => '2');
++	push @attrs, (sambaSID => $smbsid);
+     }
+     if (($event eq 'user-create') || ($event eq 'group-create'))
+     {
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups	2010-09-24 18:47:32.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups	2010-09-24 18:43:40.000000000 +0200
+@@ -5,18 +5,23 @@
+ 	my $desc = $_->prop('Description') || '';
+ 	my $gid = $_->prop('Gid');
+ 	my @members = split( /,/, ($_->prop('Members') || '') );
++	my $smbsid = $smbsid{$key} || '';
+ 
+ 	$OUT .= "\n";
+ 	$OUT .= "dn: cn=$key,ou=Groups,$ldapBase\n";
+ 	$OUT .= "objectClass: posixGroup\n";
+ 	$OUT .= "objectClass: mailboxRelatedObject\n";
++	$OUT .= "objectClass: sambaGroupMapping\n";
+ 	$OUT .= "gidNumber: $gid\n";
+ 	$OUT .= "cn: $key\n";
+ 	$OUT .= "description: $desc\n";
++	$OUT .= "displayName: $desc\n";
+ 	$OUT .= "mail: $key\@$DomainName\n";
+ 	foreach my $member (@members){
+ 	    $OUT .= "memberUid: $member\n";
+ 	}
++	$OUT .= "sambaGroupType: 2\n";
++	$OUT .= "sambaSID: $smbsid\n";
+     }
+ }
+ 
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users	2010-09-24 18:47:32.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users	2010-09-24 16:15:45.000000000 +0200
+@@ -18,10 +18,19 @@
+ 	my $home = $home{$key};
+ 	my $shell = $shell{$key};
+ 
++	my $lmpass = $lmpass{$key} || '';
++	my $ntpass = $ntpass{$key} || '';
++	my $smbflag = $smbflag{$key} || '';
++	my $smblct = $smblct{$key} || '';
++	my $smbsid = $smbsid{$key} || '';
++	my $smbpgsid = $smbpgsid{$key} || '';
++
++
+ 	$OUT .= "\n";
+ 	$OUT .= utf8("dn: uid=$key,ou=Users,$ldapBase\n");
+ 	$OUT .= utf8("objectClass: inetOrgPerson\n");
+ 	$OUT .= utf8("objectClass: posixAccount\n");
++	$OUT .= utf8("objectClass: sambaSamAccount\n");
+ 	$OUT .= utf8("uid: $key\n");
+ 	$OUT .= utf8("cn: $name\n") if $name;
+ 	$OUT .= utf8("givenName: $first\n") if $first;
+@@ -37,5 +46,12 @@
+ 	$OUT .= utf8("gidNumber: $gid\n") if $gid;
+ 	$OUT .= utf8("homeDirectory: $home\n") if $home;
+ 	$OUT .= utf8("loginShell: $shell\n") if $shell;
++	$OUT .= utf8("sambaLMPassword: $lmpass\n") if $lmpass;
++	$OUT .= utf8("sambaNTPassword: $ntpass\n") if $ntpass;
++	$OUT .= utf8("sambaAcctFlags: $smbflag\n") if $smbflag;
++	$OUT .= utf8("sambaPwdLastSet: $smblct\n") if $smblct;
++	$OUT .= utf8("sambaSID: $smbsid\n") if $smbsid;
++	$OUT .= utf8("sambaPrimaryGroupSID: $smbpgsid\n") if $smbpgsid;
++
+     }
+ }
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-09-24 18:47:32.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-09-24 16:15:45.000000000 +0200
+@@ -28,5 +28,35 @@
+     }
+     endpwent();
+ 
++    %lmpass = ();
++    %ntpass = ();
++    %smbflag = ();
++    %smblct = ();
++    %smbsid = ();
++    %smbpgsid = ();
++
++    foreach my $line (`/usr/bin/pdbedit -Lw`){
++        my ($key,undef,$lmpass,$ntpass,$smbflag,$smblct) = split(/:/,$line);
++        $lmpass{$key} = $lmpass;
++        $ntpass{$key} = $ntpass;
++        $smbflag{$key} = $smbflag;
++        $smblct =~ s/LCT\-//;
++        $smblct{$key} = hex($smblct);
++        foreach my $info (`/usr/bin/pdbedit -v $key`){
++            $smbsid{$key} = $1 if ($info =~ m/User SID:\s+(S-.*)/);
++            $smbpgsid{$key} = $1 if ($info =~ m/Primary Group SID:\s+(S-.*)/);
++        }
++   }
++
++    foreach (`/usr/bin/net groupmap list`){
++        chomp;
++        next unless (/^(.*?) \((S-.*-\d+)\) -> (.*)$/);
++        my ($desc, $smbsid, $key) = ($1, $2, $3);
++        # We only want group sid
++        my $account = $a->get($key) || next;
++        next unless ($account->prop('type') eq 'group');
++        $smbsid{$key} = $smbsid;
++    }
++
+     $OUT = "";
+ }
