@@ -1,9 +1,4 @@
 diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cleanup e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
-diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cleanup e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
-diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cleanup e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
-diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cleanup e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
-diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cleanup e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
-diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cleanup e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
 --- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cleanup	2010-09-24 10:58:52.000000000 -0600
 +++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-25 02:13:08.000000000 -0600
 @@ -30,6 +30,7 @@ use esmith::ConfigDB;
