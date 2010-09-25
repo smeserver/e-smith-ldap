@@ -1,15 +1,16 @@
-# $Id: e-smith-ldap.spec,v 1.10 2008/10/07 18:40:10 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.11 2010/09/25 21:04:58 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.0.0
-%define release 1
+%define release 2
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
 Group: Networking/Daemons
 Source: %{name}-%{version}.tar.gz
+Patch1: e-smith-ldap-5.0.0-ldif_template_fix.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -23,6 +24,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sat Sep 25 2010 Shad L. Lords <slords@mail.com> 5.0.0-2.sme
+- Fix ldif template for groups [SME: 6237]
+
 * Tue Oct 7 2008 Shad L. Lords <slords@mail.com> 5.0.0-1.sme
 - Roll new stream to separate sme7/sme8 trees [SME: 4633]
 
@@ -670,6 +674,7 @@ e-smith server and gateway software - LDAP module.
 
 %prep
 %setup
+%patch1 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

@@ -1,0 +1,13 @@
+diff -up e-smith-ldap-5.0.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups.ldif_template_fix e-smith-ldap-5.0.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups
+--- e-smith-ldap-5.0.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups.ldif_template_fix	2006-03-15 14:17:43.000000000 -0700
++++ e-smith-ldap-5.0.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups	2010-09-25 14:53:39.000000000 -0600
+@@ -6,7 +6,8 @@
+ 
+ 	$OUT .= "\n";
+ 	$OUT .= "dn: uid=$key,$ldapBase\n";
+-	$OUT .= "objectClass: group\n";
++	$OUT .= "objectClass: posixGroup\n";
++	$OUT .= utf8("uid: $key\n");
+ 	$OUT .= "mail: $key\@$DomainName\n";
+ 	$OUT .= utf8("cn: $desc\n") if $desc;
+     }
