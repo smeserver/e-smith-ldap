@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.43 2010/09/24 16:50:54 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.44 2010/09/25 08:15:08 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 30
+%define release 31
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -39,6 +39,7 @@ Patch25: e-smith-ldap-5.2.0-add_computers_ou.patch
 Patch26: e-smith-ldap-5.2.0-add_posixaccount_attr_in_ldap.patch
 Patch27: e-smith-ldap-5.2.0-full_path_to_config.patch
 Patch28: e-smith-ldap-5.2.0-add_samba_attr_in_ldap.patch
+Patch29: e-smith-ldap-5.2.0-code_cleanup.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -52,6 +53,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sat Sep 25 2010 Shad L. Lords <slords@mail.com> 5.2.0-31.sme
+- Rewrite ldap-update to make adding classes easier [SME: 6233]
+
 * Fri Sep 24 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-30.sme
 - Add sambaSamAccount attributes in LDAP [SME: 6232]
 
@@ -826,6 +830,7 @@ e-smith server and gateway software - LDAP module.
 %patch26 -p1
 %patch27 -p1
 %patch28 -p1
+%patch29 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
