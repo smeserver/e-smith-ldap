@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.45 2010/09/25 18:38:04 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.46 2010/09/25 20:42:47 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 34
+%define release 35
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -43,6 +43,7 @@ Patch29: e-smith-ldap-5.2.0-code_cleanup.patch
 Patch30: e-smith-ldap-5.2.0-base_oid.patch
 Patch31: e-smith-ldap-5.2.0-rename_old_record.patch
 Patch32: e-smith-ldap-5.2.0-add_ibay_machine.patch
+Patch33: e-smith-ldap-5.2.0-rename_old_record_fix.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -56,6 +57,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sat Sep 25 2010 Shad L. Lords <slords@mail.com> 5.2.0-35.sme
+- Fix old record lookups from sme7 [SME: 6235]
+
 * Sat Sep 25 2010 Shad L. Lords <slords@mail.com> 5.2.0-34.sme
 - Add ibay and machine accounts into ldap [SME: 6236]
 
@@ -846,6 +850,7 @@ e-smith server and gateway software - LDAP module.
 %patch30 -p1
 %patch31 -p1
 %patch32 -p1
+%patch33 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

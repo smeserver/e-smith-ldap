@@ -1,0 +1,165 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.rename_old_record_fix e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.rename_old_record_fix	2010-09-25 13:59:31.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-25 14:39:31.000000000 -0600
+@@ -120,11 +120,14 @@ my $o = $l->prop('defaultCompany') || $d
+ my %seen;
+ my @objects = qw(top organization dcObject);
+ my $result = $ldap->search( base => $base, filter => '(objectClass=*)', scope => 'base' );
+-warn "failed checking base entry $base: ", $result->error if $result->code;
+-if ($result->count == 0)
++if ($result->code == 32)
+ {
+     $result = $ldap->add( $base, attr => [ dc => $dc, o => $o, objectClass => \@objects ] );
+ }
++elsif ($result->code)
++{
++    warn "failed checking base entry $base: ", $result->error;
++}
+ else
+ {
+     # Don't overwrite objectClass (just update if necessary)
+@@ -132,18 +135,21 @@ else
+     @objects = grep { ! $seen{$_} ++ } (@objects, $result->entry(0)->get_value('objectClass') );
+     $ldap->modify( $base, replace => { dc => $dc, o => $o, objectClass => \@objects } );
+ }
+-warn "failed(",$result->code,") to add/update entry $base: ", $result->error if $result->code;
++warn "failed to add/update entry $base: ", $result->error if $result->code;
+ 
+ # Try and find container records
+ foreach my $obj ( qw(Users Groups Computers) )
+ {
+     @objects = qw(top organizationalUnit);
+-    $result = $ldap->search( base => $base, filter => "(ou=$obj)" );
+-    warn "failed checking base entry ou=$obj,$base: ", $result->error if $result->code;
+-    if ($result->count == 0)
++    $result = $ldap->search( base => "ou=$obj,$base", filter => '(objectClass=*)', scope => 'base' );
++    if ($result->code == 32)
+     {
+ 	$result = $ldap->add( "ou=$obj,$base", attr => [ ou => $obj, objectClass => \@objects ] );
+     }
++    elsif ($result->code)
++    {
++	warn "failed checking base entry ou=$obj,$base: ", $result->error;
++    }
+     else
+     {
+ 	# Don't overwrite objectClass (just update if necessary)
+@@ -266,42 +272,11 @@ endpwent();
+ #------------------------------------------------------------
+ foreach my $dn (keys %$updates)
+ {
+-    # Try and find old record (sme7)
+-    my ($oldfilter, undef, $oldsearchbase) = split /,/, $dn, 3;
+-    my $oldresult = $ldap->search( base => $oldsearchbase, filter => "($oldfilter)", scope => 'one' );
+-    if ( $result->code )
+-    {
+-	warn "failed looking up old entry $oldfilter,$oldsearchbase: ", $result->error;
+-	next;
+-    }
+-
+     # Try and find record
+-    my ($filter, $searchbase) = split /,/, $dn, 2;
+-    $result = $ldap->search( base => $searchbase, filter => "($filter)" );
+-    if ( $result->code )
+-    {
+-	warn "failed looking up entry $dn: ", $result->error;
+-	next;
+-    }
+-    my $cnt = $result->count;
+-    my @objectClass = $cnt == 0 ? () : $result->entry(0)->get_value('objectClass');
+-
+-    # If we have an old record either rename it or remove it
+-    if ( $oldresult->count == 1)
+-    {
+-	if ( $cnt == 0 )
+-	{
+-	    $result = $ldap->moddn( "$oldfilter,$oldsearchbase", newrdn => $filter, newsuperior => $searchbase, deleteoldrdn => 1 );
+-	    warn "failed to rename old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
+-	    $cnt = $oldresult->count;
+-	    @objectClass = $oldresult->entry(0)->get_value('objectClass');
+-	}
+-	else
+-	{
+-	    $result = $ldap->delete( "$oldfilter,$oldsearchbase" );
+-	    warn "failed to remove old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
+-	}
+-    }
++    $result = $ldap->search( base => $dn, filter => '(objectClass=*)', scope => 'base' );
++    warn "failed looking up entry $dn: ", $result->error if $result->code && $result->code != 32;
++    my $code = $result->code;
++    my @objectClass = $code == 32 ? () : $result->entry(0)->get_value('objectClass');
+ 
+     # Clean up attributes and convert to utf8
+     delete $updates->{$dn}->{'junk'};
+@@ -309,7 +284,7 @@ foreach my $dn (keys %$updates)
+     {
+ 	if ( ref($updates->{$dn}->{$attr}) eq 'ARRAY' )
+ 	{
+-	    if ( $cnt == 0 and scalar(@{$updates->{$dn}->{$attr}}) == 0 )
++	    if ( $code == 32 and scalar(@{$updates->{$dn}->{$attr}}) == 0 )
+ 	    {
+ 		delete $updates->{$dn}->{$attr};
+ 	    }
+@@ -327,7 +302,7 @@ foreach my $dn (keys %$updates)
+ 	    {
+ 		utf8::upgrade($updates->{$dn}->{$attr});
+ 	    }
+-	    elsif ( $cnt == 0 )
++	    elsif ( $code == 32 )
+ 	    {
+ 		delete $updates->{$dn}->{$attr};
+ 	    }
+@@ -338,25 +313,45 @@ foreach my $dn (keys %$updates)
+ 	}
+     }
+ 
++    # Try and find old record (sme7)
++    my ($oldfilter, undef, $oldsearchbase) = split /,/, $dn, 3;
++    my $oldresult = $ldap->search( base => "$oldfilter,$oldsearchbase", filter => '(objectClass=*)', scope => 'base' );
++    if ($oldresult->code)
++    {
++	warn "failed looking up old entry $oldfilter,$oldsearchbase: ", $result->error if $oldresult->code != 32;
++    }
++    else
++    {
++	if ($code == 32)
++	{
++	    my ($newdn, $newbase) = split /,/, $dn, 2;
++	    $result = $ldap->moddn( "$oldfilter,$oldsearchbase", newrdn => $newdn, newsuperior => $newbase, deleteoldrdn => 1 );
++	    warn "failed to rename old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
++	    $code = $oldresult->code;
++	    @objectClass = $oldresult->entry(0)->get_value('objectClass');
++	}
++	else
++	{
++	    $result = $ldap->delete( "$oldfilter,$oldsearchbase" );
++	    warn "failed to remove old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
++	}
++    }
++
+     # Perform insert or update
+-    if ( $cnt == 0 )
++    if ( $code == 32 )
+     {
+ 	$result = $ldap->add( $dn, attrs => [ %{$updates->{$dn}} ] );
+ 	$result->code && warn "failed to add entry $dn: ", $result->error;
+     }
+-    elsif ( $cnt == 1 )
++    else
+     {
+-	# Don't overwrite objectClass (just update if necessary)
+-	%seen = ();
++	# Don't overwrite objectClass (just remove person if existing)
++	%seen = ( person => 1 );
+ 	@{$updates->{$dn}->{objectClass}} = grep { ! $seen{$_} ++ } (@{$updates->{$dn}->{objectClass}}, @objectClass );
+ 
+ 	$result = $ldap->modify( $dn, replace => $updates->{$dn});
+ 	$result->code && warn "failed to modify entry $dn: ", $result->error;
+     }
+-    else
+-    {
+-	warn "failed looking up entry $dn: found $cnt results";
+-    }
+ }
+ $ldap->unbind;
+ 
