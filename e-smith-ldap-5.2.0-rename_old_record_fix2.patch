@@ -8,7 +8,7 @@ diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.rename_o
 +
 +	    # Ensure key entry exist in old record before renaming
 +	    $result = $ldap->modify( "$oldfilter,$oldsearchbase", replace => { split('=', $newdn) } );
-+	    warn "failed to rename old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
++	    warn "failed to add attributes to old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
 +
 +	    # Move old record to new location
  	    $result = $ldap->moddn( "$oldfilter,$oldsearchbase", newrdn => $newdn, newsuperior => $newbase, deleteoldrdn => 1 );
