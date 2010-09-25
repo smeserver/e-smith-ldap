@@ -1,0 +1,58 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.rename_old_record e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.rename_old_record	2010-09-25 12:20:02.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-25 12:19:15.000000000 -0600
+@@ -260,15 +260,42 @@ endpwent();
+ #------------------------------------------------------------
+ foreach my $dn (keys %$updates)
+ {
++    # Try and find old record (sme7)
++    my ($oldfilter, undef, $oldsearchbase) = split /,/, $dn, 3;
++    my $oldresult = $ldap->search( base => $oldsearchbase, filter => "($oldfilter)", scope => 'one' );
++    if ( $result->code )
++    {
++	warn "failed looking up old entry $oldfilter,$oldsearchbase: ", $result->error;
++	next;
++    }
++
+     # Try and find record
+     my ($filter, $searchbase) = split /,/, $dn, 2;
+-    my $result = $ldap->search( base => $searchbase, filter => "($filter)" );
++    $result = $ldap->search( base => $searchbase, filter => "($filter)" );
+     if ( $result->code )
+     {
+ 	warn "failed looking up entry $dn: ", $result->error;
+ 	next;
+     }
+     my $cnt = $result->count;
++    my @objectClass = $cnt == 0 ? () : $result->entry(0)->get_value('objectClass');
++
++    # If we have an old record either rename it or remove it
++    if ( $oldresult->count == 1)
++    {
++	if ( $cnt == 0 )
++	{
++	    $result = $ldap->moddn( "$oldfilter,$oldsearchbase", newrdn => $filter, newsuperior => $searchbase, deleteoldrdn => 1 );
++	    warn "failed to rename old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
++	    $cnt = $oldresult->count;
++	    @objectClass = $oldresult->entry(0)->get_value('objectClass');
++	}
++	else
++	{
++	    $result = $ldap->delete( "$oldfilter,$oldsearchbase" );
++	    warn "failed to remove old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
++	}
++    }
+ 
+     # Clean up attributes and convert to utf8
+     delete $updates->{$dn}->{'junk'};
+@@ -313,6 +340,10 @@ foreach my $dn (keys %$updates)
+     }
+     elsif ( $cnt == 1 )
+     {
++	# Don't overwrite objectClass (just update if necessary)
++	%seen = ();
++	@{$updates->{$dn}->{objectClass}} = grep { ! $seen{$_} ++ } (@{$updates->{$dn}->{objectClass}}, @objectClass );
++
+ 	$result = $ldap->modify( $dn, replace => $updates->{$dn});
+ 	$result->code && warn "failed to modify entry $dn: ", $result->error;
+     }

@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.44 2010/09/25 08:15:08 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.45 2010/09/25 18:38:04 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 31
+%define release 34
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -40,6 +40,9 @@ Patch26: e-smith-ldap-5.2.0-add_posixaccount_attr_in_ldap.patch
 Patch27: e-smith-ldap-5.2.0-full_path_to_config.patch
 Patch28: e-smith-ldap-5.2.0-add_samba_attr_in_ldap.patch
 Patch29: e-smith-ldap-5.2.0-code_cleanup.patch
+Patch30: e-smith-ldap-5.2.0-base_oid.patch
+Patch31: e-smith-ldap-5.2.0-rename_old_record.patch
+Patch32: e-smith-ldap-5.2.0-add_ibay_machine.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -53,6 +56,15 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sat Sep 25 2010 Shad L. Lords <slords@mail.com> 5.2.0-34.sme
+- Add ibay and machine accounts into ldap [SME: 6236]
+
+* Sat Sep 25 2010 Shad L. Lords <slords@mail.com> 5.2.0-33.sme
+- Rename old ldap record from sme7 if exists [SME: 6235]
+
+* Sat Sep 25 2010 Shad L. Lords <slords@mail.com> 5.2.0-32.sme
+- Fix/add base ou entries needed for new schema [SME: 6234]
+
 * Sat Sep 25 2010 Shad L. Lords <slords@mail.com> 5.2.0-31.sme
 - Rewrite ldap-update to make adding classes easier [SME: 6233]
 
@@ -831,6 +843,9 @@ e-smith server and gateway software - LDAP module.
 %patch27 -p1
 %patch28 -p1
 %patch29 -p1
+%patch30 -p1
+%patch31 -p1
+%patch32 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

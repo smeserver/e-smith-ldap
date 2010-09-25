@@ -1,6 +1,6 @@
 diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cleanup e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
---- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cleanup	2010-09-24 10:58:52.000000000 -0600
-+++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-25 02:13:08.000000000 -0600
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cleanup	2010-09-25 12:07:10.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-25 12:07:30.000000000 -0600
 @@ -30,6 +30,7 @@ use esmith::ConfigDB;
  use esmith::AccountsDB;
  use esmith::util;
@@ -119,7 +119,7 @@ diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cle
  
  my $ldap = Net::LDAP->new('localhost')
      or die "$@";
-@@ -145,109 +115,155 @@ $ldap->bind(
+@@ -145,109 +115,169 @@ $ldap->bind(
      password => $pw
  );
  
@@ -128,6 +128,9 @@ diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cle
 -my $dept = $l->prop('defaultDepartment') || '';
 -my $city = $l->prop('defaultCity') || '';
 -my $street = $l->prop('defaultStreet') || '';
++#------------------------------------------------------------
++# Create a list of updates that need to happen
++#------------------------------------------------------------
 +my $updates;
  foreach my $acct (@accounts)
  {
@@ -200,10 +203,15 @@ diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cle
 +	# Do the user portion
 +	#------------------------------------------------------------
 +	my $dn = "uid=$key,ou=Users,$base";
-+	$updates->{$dn}->{objectClass} = ['posixAccount', 'shadowAccount', 'account'];
++	$updates->{$dn}->{objectClass} = ['posixAccount', 'shadowAccount'];
 +
 +	# Read information from getent passwd
 +	@{$updates->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($key);
++	unless ($updates->{$dn}->{uid})
++	{
++	    delete $updates->{$dn};
++	    next;
++	}
 +	$updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
 +	$desc = $updates->{$dn}->{cn} = $updates->{$dn}->{gecos};
 +
@@ -215,33 +223,37 @@ diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cle
 +	}
 +
 +	# Ensure users have the needed properties
-+	if ($type eq 'user')
++	if ($type eq 'user' or $key eq 'admin')
 +	{
 +	    push @{$updates->{$dn}->{objectClass}}, 'inetOrgPerson';
 +	    $updates->{$dn}->{mail} = "$key\@$domain";
++	}
++	else
++	{
++	    push @{$updates->{$dn}->{objectClass}}, 'account';
++	}
 +
-+	    # Samba parameters if we find the samba.schema
-+	    if ( -f "$schema" and -x '/usr/bin/pdbedit' )
++	# Samba parameters if we find the samba.schema
++	if ( -f "$schema" and -x '/usr/bin/pdbedit' )
++	{
++	    my $line = `/usr/bin/pdbedit -wu '$key' 2> /dev/null`;
++	    chomp($line);
++	    if ($line)
 +	    {
-+		my $line = `/usr/bin/pdbedit -wu '$key' 2> /dev/null`;
-+		chomp($line);
-+		if ($line)
++		@{$updates->{$dn}}{'junk','junk','sambaLMPassword','sambaNTPassword'} = split(/:/,$line);
++		foreach $line (`/usr/bin/pdbedit -vu '$key' 2> /dev/null`)
 +		{
-+		    @{$updates->{$dn}}{'junk','junk','sambaLMPassword','sambaNTPassword'} = split(/:/,$line);
-+		    foreach $line (`/usr/bin/pdbedit -vu '$key' 2> /dev/null`)
-+		    {
-+			chomp($line);
-+			$updates->{$dn}->{sambaSID} = $1 if $line =~ m{User SID:\s+(S-.*)$};
-+			$updates->{$dn}->{displayName} = $1 if $line =~ m{Full Name:\s+(.*)$};
-+			$updates->{$dn}->{sambaPrimaryGroupSID} = $1 if $line =~ m{Primary Group SID:\s+(S-.*)$};
-+			$updates->{$dn}->{sambaAcctFlags} = $1 if $line =~ m{Account Flags:\s+(.*)$};
-+			$updates->{$dn}->{sambaPwdLastSet} = str2time($1) if $line =~ m{Password last set:\s+(.*)$};
-+		    }
-+		    push @{$updates->{$dn}->{objectClass}}, 'sambaSamAccount';
++		    chomp($line);
++		    $updates->{$dn}->{sambaSID} = $1 if $line =~ m{User SID:\s+(S-.*)$};
++		    $updates->{$dn}->{displayName} = $1 if $line =~ m{Full Name:\s+(.*)$};
++		    $updates->{$dn}->{sambaPrimaryGroupSID} = $1 if $line =~ m{Primary Group SID:\s+(S-.*)$};
++		    $updates->{$dn}->{sambaAcctFlags} = $1 if $line =~ m{Account Flags:\s+(.*)$};
++		    $updates->{$dn}->{sambaPwdLastSet} = str2time($1) if $line =~ m{Password last set:\s+(.*)$};
 +		}
++		push @{$updates->{$dn}->{objectClass}}, 'sambaSamAccount';
 +	    }
 +	}
-+    
++
 +	#------------------------------------------------------------
 +	# Do the group portion
 +	#------------------------------------------------------------
@@ -288,29 +300,31 @@ diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cle
 +	    $updates->{$dn}->{sambaGroupType} = '2';
 +	}
 +
-+    }
+     }
+-    if (($event eq 'user-create') || ($event eq 'group-create'))
 +}
 +endpwent();
 +
-+# Fix attributes and update ldap
++#------------------------------------------------------------
++# Update LDAP database entry.
++#------------------------------------------------------------
 +foreach my $dn (keys %$updates)
 +{
 +    # Try and find record
 +    my ($filter, $searchbase) = split /,/, $dn, 2;
 +    my $result = $ldap->search( base => $searchbase, filter => "($filter)" );
 +    if ( $result->code )
-+    {
-+	warn "failed looking up entry for $dn: ", $result->error;
+     {
+-	my $result = $ldap->add ($dn, attr => \@attrs);
++	warn "failed looking up entry $dn: ", $result->error;
 +	next;
-     }
--    if (($event eq 'user-create') || ($event eq 'group-create'))
-+    my $cnt = scalar $result->entries();
-+    
++    }
++    my $cnt = $result->count;
++
 +    # Clean up attributes and convert to utf8
 +    delete $updates->{$dn}->{'junk'};
 +    foreach my $attr ( keys %{$updates->{$dn}} )
-     {
--	my $result = $ldap->add ($dn, attr => \@attrs);
++    {
 +	if ( ref($updates->{$dn}->{$attr}) eq 'ARRAY' )
 +	{
 +	    if ( $cnt == 0 and scalar(@{$updates->{$dn}->{$attr}}) == 0 )
@@ -347,13 +361,13 @@ diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cle
 +    # Perform insert or update
 +    if ( $cnt == 0 )
 +    {
-+	$result = $ldap->add ($dn, attrs => [ %{$updates->{$dn}} ] );
-+	$result->code && warn "failed to add entry for $dn: ", $result->error;
++	$result = $ldap->add( $dn, attrs => [ %{$updates->{$dn}} ] );
++	$result->code && warn "failed to add entry $dn: ", $result->error;
 +    }
 +    elsif ( $cnt == 1 )
 +    {
-+	$result = $ldap->modify ($dn, replace => $updates->{$dn});
-+	$result->code && warn "failed to modify entry for $dn: ", $result->error;
++	$result = $ldap->modify( $dn, replace => $updates->{$dn});
++	$result->code && warn "failed to modify entry $dn: ", $result->error;
      }
      else
      {
@@ -362,7 +376,7 @@ diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.code_cle
 -
 -	$result->code &&
 -	    warn "failed to modify entry for $dn: ", $result->error ;
-+	warn "failed looking up entry for $dn: found $cnt results";
++	warn "failed looking up entry $dn: found $cnt results";
      }
  }
  $ldap->unbind;

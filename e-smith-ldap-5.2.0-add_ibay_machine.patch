@@ -1,0 +1,49 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.add_ibay_machine e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.add_ibay_machine	2010-09-25 12:26:55.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-25 12:25:26.000000000 -0600
+@@ -66,7 +66,7 @@ my $account;
+ my $event = shift || die "Event name must be specified";
+ if ($event eq 'ldap-update')
+ {
+-    @accounts = ($a->users, $a->groups);
++    @accounts = ($a->users, $a->groups, $a->ibays, $a->get_all_by_prop(type => 'machine'));
+     push(@accounts, $a->get('admin'));
+ }
+ else
+@@ -78,10 +78,8 @@ else
+     die "Account $userName not found.\n" unless defined $account;
+     my $type = $account->prop('type') || "unknown";
+ 
+-    exit (0) if ($type eq 'ibay');
+-
+-    die "Account $userName is not a user or group account; update LDAP entry failed.\n"
+-	unless (($type eq 'user') || ($type eq 'group') || ($userName eq 'admin'));
++    die "Account $userName is not a user, group, ibay, machine account; update LDAP entry failed.\n"
++	unless ($type =~ m{^(?:user|group|ibay|machine)$} or $userName eq 'admin');
+     @accounts = ($account);
+ }
+ 
+@@ -165,13 +163,21 @@ foreach my $acct (@accounts)
+     my $key = $acct->key;
+     my $type = $acct->prop('type');
+     my $desc = undef;
++    my $dn;
+ 
+-    if ($type =~ m{^(?:user|group)$} or $key eq 'admin')
++    if ($type =~ m{^(?:user|group|ibay|machine)$} or $key eq 'admin')
+     {
+ 	#------------------------------------------------------------
+ 	# Do the user portion
+ 	#------------------------------------------------------------
+-	my $dn = "uid=$key,ou=Users,$base";
++	if ($type eq 'machine')
++	{
++	    $dn = "uid=$key,ou=Computers,$base";
++	}
++	else
++	{
++	    $dn = "uid=$key,ou=Users,$base";
++	}
+ 	$updates->{$dn}->{objectClass} = ['posixAccount', 'shadowAccount'];
+ 
+ 	# Read information from getent passwd

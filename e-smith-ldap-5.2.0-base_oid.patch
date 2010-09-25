@@ -1,0 +1,51 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.base_oid e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.base_oid	2010-09-25 12:11:23.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-25 12:13:25.000000000 -0600
+@@ -115,6 +115,47 @@ $ldap->bind(
+     password => $pw
+ );
+ 
++my ($dc,undef) = split (/\./, $domain);
++my $o = $l->prop('defaultCompany') || $domain;
++
++# Try and find base record
++my %seen;
++my @objects = qw(top organization dcObject);
++my $result = $ldap->search( base => $base, filter => '(objectClass=*)', scope => 'base' );
++warn "failed checking base entry $base: ", $result->error if $result->code;
++if ($result->count == 0)
++{
++    $result = $ldap->add( $base, attr => [ dc => $dc, o => $o, objectClass => \@objects ] );
++}
++else
++{
++    # Don't overwrite objectClass (just update if necessary)
++    %seen = ();
++    @objects = grep { ! $seen{$_} ++ } (@objects, $result->entry(0)->get_value('objectClass') );
++    $ldap->modify( $base, replace => { dc => $dc, o => $o, objectClass => \@objects } );
++}
++warn "failed(",$result->code,") to add/update entry $base: ", $result->error if $result->code;
++
++# Try and find container records
++foreach my $obj ( qw(Users Groups Computers) )
++{
++    @objects = qw(top organizationalUnit);
++    $result = $ldap->search( base => $base, filter => "(ou=$obj)" );
++    warn "failed checking base entry ou=$obj,$base: ", $result->error if $result->code;
++    if ($result->count == 0)
++    {
++	$result = $ldap->add( "ou=$obj,$base", attr => [ ou => $obj, objectClass => \@objects ] );
++    }
++    else
++    {
++	# Don't overwrite objectClass (just update if necessary)
++	%seen = ();
++	@objects = grep { ! $seen{$_} ++ } (@objects, $result->entry(0)->get_value('objectClass') );
++	$result = $ldap->modify( "ou=$obj,$base", replace => { ou => $obj, objectClass => \@objects } );
++    }
++    warn "failed to add/update entry ou=$obj,$base: ", $result->error if $result->code;
++}
++
+ #------------------------------------------------------------
+ # Create a list of updates that need to happen
+ #------------------------------------------------------------
