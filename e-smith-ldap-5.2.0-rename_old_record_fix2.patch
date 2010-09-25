@@ -1,0 +1,20 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.rename_old_record_fix2 e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.rename_old_record_fix2	2010-09-25 15:17:08.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-25 15:18:23.000000000 -0600
+@@ -325,8 +325,16 @@ foreach my $dn (keys %$updates)
+ 	if ($code == 32)
+ 	{
+ 	    my ($newdn, $newbase) = split /,/, $dn, 2;
++
++	    # Ensure key entry exist in old record before renaming
++	    $result = $ldap->modify( "$oldfilter,$oldsearchbase", replace => { split('=', $newdn) } );
++	    warn "failed to rename old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
++
++	    # Move old record to new location
+ 	    $result = $ldap->moddn( "$oldfilter,$oldsearchbase", newrdn => $newdn, newsuperior => $newbase, deleteoldrdn => 1 );
+ 	    warn "failed to rename old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
++
++	    # Set things up as if we had found the new entry
+ 	    $code = $oldresult->code;
+ 	    @objectClass = $oldresult->entry(0)->get_value('objectClass');
+ 	}
