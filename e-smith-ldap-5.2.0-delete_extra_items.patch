@@ -1,0 +1,74 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-delete.delete_extra_items e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-delete
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-delete.delete_extra_items	2010-09-26 08:54:29.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-delete	2010-09-26 09:08:00.000000000 -0600
+@@ -57,23 +57,60 @@ $ldap->bind(
+     password => $pw
+ );
+ 
+-my @search_args = ();
+-if ($event eq 'user-delete'){
+-	@search_args = ( base => "ou=Users,$base", filter => "uid=$name" );
++# Delete any user object with this name
++my $mesg = $ldap->search( base-> "uid=$name,ou=Users,$base", filter => '(ObjectClass=*)', scope => 'base' );
++if ($mesg->code && $mesg->code != 32)
++{
++    warn "Failed ldap search uid=$name,ou=Users,$base: ", $mesg->error;
+ }
+-elsif($event eq 'group-delete'){
+-	@search_args = ( base => "ou=Groups,$base", filter => "cn=$name" );
++else
++{
++    $ldap->delete($mesg->entry(0));
+ }
+-my $mesg = $ldap->search(@search_args);
+ 
+-$mesg->code && die "Failed ldap search: ", $mesg->error;
++# Delete any computer object with this name
++my $mesg = $ldap->search( base-> "uid=$name,ou=Computers,$base", filter => '(ObjectClass=*)', scope => 'base' );
++if ($mesg->code && $mesg->code != 32)
++{
++    warn "Failed ldap search uid=$name,ou=Computers,$base: ", $mesg->error;
++}
++else
++{
++    $ldap->delete($mesg->entry(0));
++}
+ 
+-if ($mesg->count > 1)
++# Delete any (old) user/computer object with this name
++my $mesg = $ldap->search( base-> "uid=$name,$base", filter => '(ObjectClass=*)', scope => 'base' );
++if ($mesg->code && $mesg->code != 32)
++{
++    warn "Failed ldap search uid=$name,$base: ", $mesg->error;
++}
++else
+ {
+-    die("LDAP search for $name returned $mesg->count - 1 expected\n");
++    $ldap->delete($mesg->entry(0));
+ }
+ 
+-$ldap->delete($mesg->entry(0));
++# Delete any group object with this name
++my $mesg = $ldap->search( base-> "cn=$name,ou=Groups,$base", filter => '(ObjectClass=*)', scope => 'base' );
++if ($mesg->code && $mesg->code != 32)
++{
++    warn "Failed ldap search cn=$name,ou=Groups,$base: ", $mesg->error;
++}
++else
++{
++    $ldap->delete($mesg->entry(0));
++}
++
++# Delete any (old) group object with this name
++my $mesg = $ldap->search( base-> "cn=$name,$base", filter => '(ObjectClass=*)', scope => 'base' );
++if ($mesg->code && $mesg->code != 32)
++{
++    warn "Failed ldap search cn=$name,$base: ", $mesg->error;
++}
++else
++{
++    $ldap->delete($mesg->entry(0));
++}
+ 
+ $ldap->unbind;
+ 

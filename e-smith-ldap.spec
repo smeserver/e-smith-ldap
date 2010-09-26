@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.47 2010/09/25 21:23:55 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.48 2010/09/26 15:12:30 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 36
+%define release 37
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -45,6 +45,7 @@ Patch31: e-smith-ldap-5.2.0-rename_old_record.patch
 Patch32: e-smith-ldap-5.2.0-add_ibay_machine.patch
 Patch33: e-smith-ldap-5.2.0-rename_old_record_fix.patch
 Patch34: e-smith-ldap-5.2.0-rename_old_record_fix2.patch
+Patch35: e-smith-ldap-5.2.0-delete_extra_items.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -58,8 +59,11 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sun Sep 26 2010 Shad L. Lords <slords@mail.com> 5.2.0-37.sme
+- Delete all ldap objects that we now create [SME: 6238]
+
 * Sat Sep 25 2010 Shad L. Lords <slords@mail.com> 5.2.0-36.sme
-- Ensure requires attributes are present for rename [SME: 6235]
+- Ensure required attributes are present for rename [SME: 6235]
 
 * Sat Sep 25 2010 Shad L. Lords <slords@mail.com> 5.2.0-35.sme
 - Fix old record lookups from sme7 [SME: 6235]
@@ -856,6 +860,7 @@ e-smith server and gateway software - LDAP module.
 %patch32 -p1
 %patch33 -p1
 %patch34 -p1
+%patch35 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
