@@ -1,0 +1,445 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.ldif_template e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.ldif_template	2010-09-26 15:33:01.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-26 16:16:41.000000000 -0600
+@@ -266,6 +266,7 @@ foreach my $acct (@accounts)
+     }
+ }
+ endpwent();
++endgrent();
+ 
+ #------------------------------------------------------------
+ # Update LDAP database entry.
+@@ -355,7 +356,7 @@ foreach my $dn (keys %$updates)
+     {
+ 	# Don't overwrite objectClass (just remove person if existing)
+ 	%seen = ( person => 1 );
+-	@{$updates->{$dn}->{objectClass}} = grep { ! $seen{$_} ++ } (@{$updates->{$dn}->{objectClass}}, @objectClass );
++	@{$updates->{$dn}->{objectClass}} = grep { ! $seen{$_}++ } (@{$updates->{$dn}->{objectClass}}, @objectClass );
+ 
+ 	$result = $ldap->modify( $dn, replace => $updates->{$dn});
+ 	$result->code && warn "failed to modify entry $dn: ", $result->error;
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/10organisation.ldif_template e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/10organisation
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/10organisation.ldif_template	2010-09-26 15:33:01.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/10organisation	2010-09-26 16:34:45.000000000 -0600
+@@ -1,26 +1,26 @@
+ {
+     my ($dc,undef) = split (/\./, $DomainName);
+-    my $o = $ldap{defaultCompany};
++    my $o = $ldap{defaultCompany} || $DomainName;
+ 
+     $OUT .= "dn: $ldapBase\n";
+-    $OUT .= "objectClass: organization\n";
+-    $OUT .= "objectClass: top\n";
+     $OUT .= "dc: $dc\n";
+     $OUT .= "o: $o\n";
+-    $OUT .= "objectClass: dcObject\n";
++    $OUT .= "objectClass: top\n";
++    $OUT .= "objectClass: organization\n";
++    $OUT .= "objectClass: dcObject\n\n";
+ 
+-    $OUT .= "\n";
+     $OUT .= "dn: ou=Users,$ldapBase\n";
++    $OUT .= "ou: Users\n";
+     $OUT .= "objectClass: top\n";
+-    $OUT .= "objectClass: organizationalUnit\n";
+-    $OUT .= "ou: Users\n\n";
++    $OUT .= "objectClass: organizationalUnit\n\n";
++
+     $OUT .= "dn: ou=Groups,$ldapBase\n";
++    $OUT .= "ou: Groups\n";
+     $OUT .= "objectClass: top\n";
+-    $OUT .= "objectClass: organizationalUnit\n";
+-    $OUT .= "ou: Groups\n\n";
++    $OUT .= "objectClass: organizationalUnit\n\n";
++
+     $OUT .= "dn: ou=Computers,$ldapBase\n";
++    $OUT .= "ou: Computers\n";
+     $OUT .= "objectClass: top\n";
+-    $OUT .= "objectClass: organizationalUnit\n";
+-    $OUT .= "ou: Computers\n\n";
++    $OUT .= "objectClass: organizationalUnit\n\n";
+ }
+-
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50computers.ldif_template e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50computers
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50computers.ldif_template	2010-09-26 16:58:19.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50computers	2010-09-26 16:50:52.000000000 -0600
+@@ -0,0 +1,40 @@
++{
++    foreach my $comp ($a->get_all_by_prop(type => 'machine'))
++    {   
++	my $key = $comp->key;
++
++        if (exists $users->{$key})
++        {
++            $OUT .= "dn: uid=$key,ou=Computers,$ldapBase\n";
++            $OUT .= "objectClass: posixAccount\n";
++            $OUT .= "objectClass: shadowAccount\n";
++            $OUT .= "objectClass: account\n";
++            $OUT .= "objectClass: sambaSamAccount\n" if exists $users->{$key}->{sambaSID};
++            foreach my $attr ( keys %{$users->{$key}} )
++            {
++                $OUT .= utf8("$attr: ".$users->{$key}->{$attr})."\n" if $users->{$key}->{$attr};
++            }
++            $OUT .= "\n";
++        }
++
++        if (exists $groups->{$key})
++        {
++            $OUT .= "dn: cn=$key,ou=Groups,$ldapBase\n";
++            $OUT .= "objectClass: posixGroup\n";
++            $OUT .= "objectClass: sambaGroupMapping\n" if exists $groups->{$key}->{sambaSID};
++            foreach my $attr ( keys %{$groups->{$key}} )
++            {
++                if (ref($groups->{$key}->{$attr}) eq 'ARRAY')
++                {
++                    my %seen = ();
++                    $OUT .= utf8("$attr: $_\n") foreach (grep { ! $seen{$_}++ } @{$groups->{$key}->{$attr}});
++                }
++                else
++                {
++                    $OUT .= utf8("$attr: ".$groups->{$key}->{$attr})."\n" if $groups->{$key}->{$attr};
++                }
++            }
++            $OUT .= "\n";
++        }
++    }
++}
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups.ldif_template e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups.ldif_template	2010-09-26 15:33:01.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50groups	2010-09-26 16:50:55.000000000 -0600
+@@ -1,27 +1,42 @@
+ {
+-    foreach ($a->groups)
++    foreach my $grp ($a->groups)
+     {   
+-	my $key = $_->key;
+-	my $desc = $_->prop('Description') || '';
+-	my $gid = $_->prop('Gid');
+-	my @members = split( /,/, ($_->prop('Members') || '') );
+-	my $smbsid = $smbsid{$key} || '';
++	my $key = $grp->key;
+ 
+-	$OUT .= "\n";
+-	$OUT .= "dn: cn=$key,ou=Groups,$ldapBase\n";
+-	$OUT .= "objectClass: posixGroup\n";
+-	$OUT .= "objectClass: mailboxRelatedObject\n";
+-	$OUT .= "objectClass: sambaGroupMapping\n";
+-	$OUT .= "gidNumber: $gid\n";
+-	$OUT .= "cn: $key\n";
+-	$OUT .= "description: $desc\n";
+-	$OUT .= "displayName: $desc\n";
+-	$OUT .= "mail: $key\@$DomainName\n";
+-	foreach my $member (@members){
+-	    $OUT .= "memberUid: $member\n";
+-	}
+-	$OUT .= "sambaGroupType: 2\n";
+-	$OUT .= "sambaSID: $smbsid\n";
++        if (exists $users->{$key})
++        {
++            $OUT .= "dn: uid=$key,ou=Users,$ldapBase\n";
++            $OUT .= "objectClass: posixAccount\n";
++            $OUT .= "objectClass: shadowAccount\n";
++            $OUT .= "objectClass: account\n";
++            $OUT .= "objectClass: sambaSamAccount\n" if exists $users->{$key}->{sambaSID};
++            foreach my $attr ( keys %{$users->{$key}} )
++            {
++                $OUT .= utf8("$attr: ".$users->{$key}->{$attr})."\n" if $users->{$key}->{$attr};
++            }
++            $OUT .= "\n";
++        }
++
++        if (exists $groups->{$key})
++        {
++            $OUT .= "dn: cn=$key,ou=Groups,$ldapBase\n";
++            $OUT .= "objectClass: posixGroup\n";
++            $OUT .= "objectClass: mailboxRelatedObject\n";
++            $OUT .= "objectClass: sambaGroupMapping\n" if exists $groups->{$key}->{sambaSID};
++            foreach my $attr ( keys %{$groups->{$key}} )
++            {
++                if (ref($groups->{$key}->{$attr}) eq 'ARRAY')
++                {
++                    my %seen = ();
++                    $OUT .= utf8("$attr: $_\n") foreach grep { ! $seen{$_}++ } @{$groups->{$key}->{$attr}};
++                }
++                else
++                {
++                    $OUT .= utf8("$attr: ".$groups->{$key}->{$attr})."\n" if $groups->{$key}->{$attr};
++                }
++            }
++            $OUT .= "mail: $key\@$DomainName\n";
++            $OUT .= "\n";
++        }
+     }
+ }
+-
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50ibays.ldif_template e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50ibays
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50ibays.ldif_template	2010-09-26 16:58:44.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50ibays	2010-09-26 16:50:57.000000000 -0600
+@@ -0,0 +1,40 @@
++{
++    foreach my $ibay ($a->ibays)
++    {   
++	my $key = $ibay->key;
++
++        if (exists $users->{$key})
++        {
++            $OUT .= "dn: uid=$key,ou=Users,$ldapBase\n";
++            $OUT .= "objectClass: posixAccount\n";
++            $OUT .= "objectClass: shadowAccount\n";
++            $OUT .= "objectClass: account\n";
++            $OUT .= "objectClass: sambaSamAccount\n" if exists $users->{$key}->{sambaSID};
++            foreach my $attr ( keys %{$users->{$key}} )
++            {
++                $OUT .= utf8("$attr: ".$users->{$key}->{$attr})."\n" if $users->{$key}->{$attr};
++            }
++            $OUT .= "\n";
++        }
++
++        if (exists $groups->{$key})
++        {
++            $OUT .= "dn: cn=$key,ou=Groups,$ldapBase\n";
++            $OUT .= "objectClass: posixGroup\n";
++            $OUT .= "objectClass: sambaGroupMapping\n" if exists $groups->{$key}->{sambaSID};
++            foreach my $attr ( keys %{$groups->{$key}} )
++            {
++                if (ref($groups->{$key}->{$attr}) eq 'ARRAY')
++                {
++                    my %seen = ();
++                    $OUT .= utf8("$attr: $_\n") foreach grep { ! $seen{$_}++ } @{$groups->{$key}->{$attr}};
++                }
++                else
++                {
++                    $OUT .= utf8("$attr: ".$groups->{$key}->{$attr})."\n" if $groups->{$key}->{$attr};
++                }
++            }
++            $OUT .= "\n";
++        }
++    }
++}
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users.ldif_template e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users.ldif_template	2010-09-26 15:33:01.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/50users	2010-09-26 16:50:58.000000000 -0600
+@@ -2,56 +2,42 @@
+     my @users = $a->users;
+     push (@users,$a->get('admin'));
+     foreach my $user (@users)
+-    {
++    {   
+ 	my $key = $user->key;
+-	my $first = $user->prop('FirstName') || '';
+-	my $last = $user->prop('LastName') || '';
+-	my $name = "$first $last";
+-	my $phone = $user->prop('Phone');
+-	my $company = $user->prop('Company');
+-	my $dept = $user->prop('Dept');
+-	my $city = $user->prop('City');
+-	my $street = $user->prop('Street');
+-	my $uid = $uid{$key};
+-	my $gid = $gid{$key};
+-	my $password = $passwd{$key};
+-	my $home = $home{$key};
+-	my $shell = $shell{$key};
+ 
+-	my $lmpass = $lmpass{$key} || '';
+-	my $ntpass = $ntpass{$key} || '';
+-	my $smbflag = $smbflag{$key} || '';
+-	my $smblct = $smblct{$key} || '';
+-	my $smbsid = $smbsid{$key} || '';
+-	my $smbpgsid = $smbpgsid{$key} || '';
+-
+-
+-	$OUT .= "\n";
+-	$OUT .= utf8("dn: uid=$key,ou=Users,$ldapBase\n");
+-	$OUT .= utf8("objectClass: inetOrgPerson\n");
+-	$OUT .= utf8("objectClass: posixAccount\n");
+-	$OUT .= utf8("objectClass: sambaSamAccount\n");
+-	$OUT .= utf8("uid: $key\n");
+-	$OUT .= utf8("cn: $name\n") if $name;
+-	$OUT .= utf8("givenName: $first\n") if $first;
+-	$OUT .= utf8("sn: $last\n") if $last;
+-	$OUT .= utf8("mail: $key\@$DomainName\n");
+-	$OUT .= utf8("telephoneNumber: $phone\n") if $phone;
+-	$OUT .= utf8("o: $company\n") if $company;
+-	$OUT .= utf8("ou: $dept\n") if $dept;
+-	$OUT .= utf8("l: $city\n") if $city;
+-	$OUT .= utf8("street: $street\n") if $street;
+-	$OUT .= utf8("userPassword: $password\n") if $password;
+-	$OUT .= utf8("uidNumber: $uid\n") if $uid;
+-	$OUT .= utf8("gidNumber: $gid\n") if $gid;
+-	$OUT .= utf8("homeDirectory: $home\n") if $home;
+-	$OUT .= utf8("loginShell: $shell\n") if $shell;
+-	$OUT .= utf8("sambaLMPassword: $lmpass\n") if $lmpass;
+-	$OUT .= utf8("sambaNTPassword: $ntpass\n") if $ntpass;
+-	$OUT .= utf8("sambaAcctFlags: $smbflag\n") if $smbflag;
+-	$OUT .= utf8("sambaPwdLastSet: $smblct\n") if $smblct;
+-	$OUT .= utf8("sambaSID: $smbsid\n") if $smbsid;
+-	$OUT .= utf8("sambaPrimaryGroupSID: $smbpgsid\n") if $smbpgsid;
++        if (exists $users->{$key})
++        {
++            $OUT .= "dn: uid=$key,ou=Users,$ldapBase\n";
++            $OUT .= "objectClass: inetOrgPerson\n";
++            $OUT .= "objectClass: posixAccount\n";
++            $OUT .= "objectClass: shadowAccount\n";
++            $OUT .= "objectClass: sambaSamAccount\n" if exists $users->{$key}->{sambaSID};
++            foreach my $attr ( keys %{$users->{$key}} )
++            {
++                $OUT .= utf8("$attr: ".$users->{$key}->{$attr})."\n" if $users->{$key}->{$attr};
++            }
++            $OUT .= utf8("mail: $key\@$DomainName\n");
++            $OUT .= "\n";
++        }
+ 
++        if (exists $groups->{$key})
++        {
++            $OUT .= "dn: cn=$key,ou=Groups,$ldapBase\n";
++            $OUT .= "objectClass: posixGroup\n";
++            $OUT .= "objectClass: sambaGroupMapping\n" if exists $groups->{$key}->{sambaSID};
++            foreach my $attr ( keys %{$groups->{$key}} )
++            {
++                if (ref($groups->{$key}->{$attr}) eq 'ARRAY')
++                {
++                    my %seen = ();
++                    $OUT .= utf8("$attr: $_\n") foreach grep { ! $seen{$_}++ } @{$groups->{$key}->{$attr}};
++                }
++                else
++                {
++                    $OUT .= utf8("$attr: ".$groups->{$key}->{$attr})."\n" if $groups->{$key}->{$attr};
++                }
++            }
++            $OUT .= "\n";
++        }
+     }
+ }
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.ldif_template e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.ldif_template	2010-09-26 15:33:01.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-09-26 16:51:00.000000000 -0600
+@@ -1,9 +1,13 @@
+ {
+     use esmith::AccountsDB;
+     use esmith::util;
++    use Date::Parse;
+ 
++    my $schema = '/etc/openldap/schema/samba.schema';
++    my $schema = '/usr/share/doc/samba-3.0.33/LDAP/samba.schema';
+     $a = esmith::AccountsDB->open_ro;
+     $ldapBase = esmith::util::ldapBase ($DomainName);
++
+     sub utf8
+     {
+ 	my $t = shift;
+@@ -11,51 +15,76 @@
+ 	return $t;
+     }
+ 
+-    %passwd = ();
+-    %uid = ();
+-    %gid = ();
+-    %home = ();
+-    %shell = ();
+-    while(my ($key,$pwd,$uid,$gid,
+-              undef,undef,undef,
+-              $dir,$shell) = getpwent()) {
+-
+-        $passwd{$key} = "{CRYPT}$pwd";
+-        $uid{$key} = $uid;
+-        $gid{$key} = $gid;
+-        $home{$key} = $dir;
+-        $shell{$key} = $shell;
++    $users = ();
++    while(my ($key,$pwd,$uid,$gid,undef,undef,$gecos,$dir,$shell) = getpwent())
++    {
++        # skip non sme users
++        my $account = $a->get($key) || next;
++
++        $users->{$key}->{uid} = $key;
++        $users->{$key}->{userPassword} = ($pwd =~ m/^\{/) ? $pwd : "\{CRYPT\}$pwd";
++        $users->{$key}->{uidNumber} = $uid;
++        $users->{$key}->{gidNumber} = $gid;
++        $users->{$key}->{gecos} = $gecos;
++        $users->{$key}->{cn} = $gecos;
++        $users->{$key}->{homeDirectory} = $dir;
++        $users->{$key}->{loginShell} = $shell;
++        if (($account->prop('type') || 'unknown') eq 'user')
++        {
++            $users->{$key}->{givenName} = $account->prop('FirstName');
++            $users->{$key}->{sn} = $account->prop('LastName');
++            $users->{$key}->{telephoneNumber} = $account->prop('Phone');
++            $users->{$key}->{o} = $account->prop('Company');
++            $users->{$key}->{ou} = $account->prop('Department');
++            $users->{$key}->{l} = $account->prop('City');
++            $users->{$key}->{street} = $account->prop('Street');
++        }
+     }
+     endpwent();
+ 
+-    %lmpass = ();
+-    %ntpass = ();
+-    %smbflag = ();
+-    %smblct = ();
+-    %smbsid = ();
+-    %smbpgsid = ();
+-
+-    foreach my $line (`/usr/bin/pdbedit -Lw`){
+-        my ($key,undef,$lmpass,$ntpass,$smbflag,$smblct) = split(/:/,$line);
+-        $lmpass{$key} = $lmpass;
+-        $ntpass{$key} = $ntpass;
+-        $smbflag{$key} = $smbflag;
+-        $smblct =~ s/LCT\-//;
+-        $smblct{$key} = hex($smblct);
+-        foreach my $info (`/usr/bin/pdbedit -v $key`){
+-            $smbsid{$key} = $1 if ($info =~ m/User SID:\s+(S-.*)/);
+-            $smbpgsid{$key} = $1 if ($info =~ m/Primary Group SID:\s+(S-.*)/);
++    if ( -f "$schema" and -x '/usr/bin/pdbedit' )
++    {
++        foreach my $line (`/usr/bin/pdbedit -Lw 2> /dev/null`)
++        {
++            my ($key,undef,$lmpass,$ntpass) = split(/:/,$line);
++            next unless exists $users->{$key};
++            $users->{$key}->{sambaLMPassword} = $lmpass;
++            $users->{$key}->{sambaNTPassword} = $ntpass;
++
++            foreach my $info (`/usr/bin/pdbedit -v '$key' 2> /dev/null`){
++                $users->{$key}->{sambaSID} = $1 if $info =~ m{User SID:\s+(S-.*)$};
++                $users->{$key}->{displayName} = $1 if $info =~ m{Full Name:\s+(.*)$};
++                $users->{$key}->{sambaPrimaryGroupSID} = $1 if $info =~ m{Primary Group SID:\s+(S-.*)$};
++                $users->{$key}->{sambaAcctFlags} = $1 if $info =~ m{Account Flags:\s+(.*)$};
++                $users->{$key}->{sambaPwdLastSet} = str2time($1) if $info =~ m{Password last set:\s+(.*)$};
++            }
+         }
+-   }
++    }
+ 
+-    foreach (`/usr/bin/net groupmap list`){
++    $groups = ();
++    while(my ($key,$pwd,$gid,$members) = getgrent())
++    {
++        # skip non sme groups
++        $a->get($key) || next;
++
++        $groups->{$key}->{cn} = $key;
++        $groups->{$key}->{userPassword} = ($pwd =~ m/^\{/) ? $pwd : "\{CRYPT\}$pwd";
++        $groups->{$key}->{gidNumber} = $gid;
++        $groups->{$key}->{description} = $users->{$key}->{cn} if exists $users->{$key}->{cn};
++        $groups->{$key}->{memberUid} = [ split /\s+/, $members ];
++    }
++    endgrent();
++
++    foreach (`/usr/bin/net groupmap list 2> /dev/null`){
+         chomp;
+-        next unless (/^(.*?) \((S-.*-\d+)\) -> (.*)$/);
+-        my ($desc, $smbsid, $key) = ($1, $2, $3);
+-        # We only want group sid
+-        my $account = $a->get($key) || next;
+-        next unless ($account->prop('type') eq 'group');
+-        $smbsid{$key} = $smbsid;
++        next if m{\(S-1-5-32-\d+\)};
++        if (/^(.*) \((S-.*-\d+)\) -> (.*)$/)
++        {
++            next unless exists $groups->{$3};
++            $groups->{$3}->{displayName} = $1;
++            $groups->{$3}->{sambaSID} = $2;
++            $groups->{$3}->{sambaGroupType} = '2';
++        }
+     }
+ 
+     $OUT = "";

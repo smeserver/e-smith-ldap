@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.48 2010/09/26 15:12:30 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.49 2010/09/26 23:02:50 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 37
+%define release 38
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -46,6 +46,7 @@ Patch32: e-smith-ldap-5.2.0-add_ibay_machine.patch
 Patch33: e-smith-ldap-5.2.0-rename_old_record_fix.patch
 Patch34: e-smith-ldap-5.2.0-rename_old_record_fix2.patch
 Patch35: e-smith-ldap-5.2.0-delete_extra_items.patch
+Patch36: e-smith-ldap-5.2.0-ldif_template.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -59,6 +60,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sun Sep 26 2010 Shad L. Lords <slords@mail.com> 5.2.0-38.sme
+- Update ldif template to match stored data [SME: 6240]
+
 * Sun Sep 26 2010 Shad L. Lords <slords@mail.com> 5.2.0-37.sme
 - Delete all ldap objects that we now create [SME: 6238]
 
@@ -861,6 +865,7 @@ e-smith server and gateway software - LDAP module.
 %patch33 -p1
 %patch34 -p1
 %patch35 -p1
+%patch36 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
