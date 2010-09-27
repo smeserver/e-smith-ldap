@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.51 2010/09/27 17:38:04 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.52 2010/09/27 21:05:57 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 40
+%define release 41
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -49,6 +49,7 @@ Patch35: e-smith-ldap-5.2.0-delete_extra_items.patch
 Patch36: e-smith-ldap-5.2.0-ldif_template.patch
 Patch37: e-smith-ldap-5.2.0-fix_ldap_delete.patch
 Patch38: e-smith-ldap-5.2.0-better_ldif.patch
+Patch39: e-smith-ldap-5.2.0-ldap_update_several_groups.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -62,6 +63,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Mon Sep 27 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-41.sme
+- Add ldap-update support for several accounts [SME: 6249]
+
 * Mon Sep 27 2010 Shad L. Lords <slords@mail.com> 5.2.0-40.sme
 - Make ldif template create single hash [SME: 6240]
 
@@ -876,6 +880,7 @@ e-smith server and gateway software - LDAP module.
 %patch36 -p1
 %patch37 -p1
 %patch38 -p1
+%patch39 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

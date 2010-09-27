@@ -1,0 +1,34 @@
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.ldap_update_several_groups	2010-09-27 20:00:44.000000000 +0200
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-09-27 21:45:02.000000000 +0200
+@@ -70,17 +70,20 @@
+     push(@accounts, $a->get('admin'));
+ }
+ else
+-{
+-    my $userName = shift;
+-    die "Username argument missing." unless defined ($userName);
+-
+-    $account = $a->get($userName);
+-    die "Account $userName not found.\n" unless defined $account;
+-    my $type = $account->prop('type') || "unknown";
+-
+-    die "Account $userName is not a user, group, ibay, machine account; update LDAP entry failed.\n"
+-	unless ($type =~ m{^(?:user|group|ibay|machine)$} or $userName eq 'admin');
+-    @accounts = ($account);
++{   
++    my @name = @ARGV;
++    die "Account name argument missing." unless scalar (@name) >= 1;
++
++    foreach my $name (@name)
++    {   
++        $account = $a->get($name);
++        die "Account $name not found.\n" unless defined $account;
++        my $type = $account->prop('type') || "unknown";
++
++        die "Account $name is not a user, group, ibay, machine account; update LDAP entry failed.\n"
++            unless ($type =~ m{^(?:user|group|ibay|machine)$} or $name eq 'admin');
++        push @accounts, $account;
++    }
+ }
+ 
+ #------------------------------------------------------------
