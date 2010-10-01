@@ -1,4 +1,4 @@
-# $Id: e-smith-ldap.spec,v 1.52 2010/09/27 21:05:57 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.53 2010/10/01 09:40:33 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
@@ -117,6 +117,7 @@ e-smith server and gateway software - LDAP module.
 - Indexe memberUid attribute [SME: 6220]
 - Expand slapd.conf during ldap-update event [SME: 6224]
 - Split slapd ACL template [SME: 6225]
+- Prevent users from reading their password over a unsecured link [SME: 6252]
 - Use md5crypt hash when client requests exop [SME: 6223]
 
 * Wed Sep 22 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-24.sme
