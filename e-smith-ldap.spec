@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.53 2010/10/01 09:40:33 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.54 2010/10/02 09:49:01 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 41
+%define release 42
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -50,6 +50,7 @@ Patch36: e-smith-ldap-5.2.0-ldif_template.patch
 Patch37: e-smith-ldap-5.2.0-fix_ldap_delete.patch
 Patch38: e-smith-ldap-5.2.0-better_ldif.patch
 Patch39: e-smith-ldap-5.2.0-ldap_update_several_groups.patch
+Patch40: e-smith-ldap-5.2.0-anonymous_acl.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -63,6 +64,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sat Oct 2 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-42.sme
+- Deny access to some attributes for anonymous users [SME: 6254]
+
 * Mon Sep 27 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-41.sme
 - Add ldap-update support for several accounts [SME: 6249]
 
@@ -882,6 +886,7 @@ e-smith server and gateway software - LDAP module.
 %patch37 -p1
 %patch38 -p1
 %patch39 -p1
+%patch40 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

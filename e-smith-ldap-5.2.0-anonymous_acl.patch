@@ -1,0 +1,67 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls60sensibleObjects mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls60sensibleObjects
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls60sensibleObjects	1970-01-01 01:00:00.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls60sensibleObjects	2010-10-01 19:14:20.000000000 +0200
+@@ -0,0 +1,10 @@
++# Anonymous users should only be able to see SME users and groups for addressbook purpose
++# Prevent access to system, dummy and machine accounts
++
++access to dn.subtree=ou=Users,{ esmith::util::ldapBase ($DomainName); } filter=(!(objectClass=inetOrgPerson))
++        by anonymous	none
++access to dn.subtree=ou=Groups,{ esmith::util::ldapBase ($DomainName); } filter=(!(objectClass=mailboxRelatedObject))
++        by anonymous	none
++access to dn.subtree=ou=Computers,{ esmith::util::ldapBase ($DomainName); }
++        by anonymous	none
++
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls70sensibleAttrs mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls70sensibleAttrs
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls70sensibleAttrs	1970-01-01 01:00:00.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls70sensibleAttrs	2010-10-01 19:12:10.000000000 +0200
+@@ -0,0 +1,8 @@
++{
++
++# Array of attrs which should not be visible anonymously
++@sensible = ();
++
++$OUT .= '';
++
++}
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls72posixAccount mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls72posixAccount
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls72posixAccount	1970-01-01 01:00:00.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls72posixAccount	2010-10-01 19:12:10.000000000 +0200
+@@ -0,0 +1,8 @@
++{
++
++# Sensible attributes related to posixAccount
++push @sensible, qw/loginShell gidNumber homeDirectory uidNumber/;
++
++$OUT .= '';
++
++}
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls74shadowAccount mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls74shadowAccount
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls74shadowAccount	1970-01-01 01:00:00.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls74shadowAccount	2010-10-01 19:12:10.000000000 +0200
+@@ -0,0 +1,8 @@
++{
++
++# Sensible attributes related to shadowAccount
++push @sensible,qw/shadowExpire shadowFlag shadowInactive shadowLastChange shadowMax shadowMin shadowWarning/; 
++
++$OUT .= '';
++
++}
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls80sensibleAcl mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls80sensibleAcl
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls80sensibleAcl	1970-01-01 01:00:00.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls80sensibleAcl	2010-10-01 19:16:31.000000000 +0200
+@@ -0,0 +1,13 @@
++{
++my $attrs = join(",",@sensible);
++
++unless ($attrs eq ''){
++    $OUT .=<<"HERE";
++# Restrict access to some sensible attributes
++access to attrs=$attrs
++        by self	peername.ip="127.0.0.1"	read
++        by self	ssf=128	read
++        by anonymous	none
++HERE
++}
++}
