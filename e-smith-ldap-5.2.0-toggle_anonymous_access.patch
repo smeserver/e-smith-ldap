@@ -1,0 +1,14 @@
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls99default.toggle_anonymous_access	2010-10-02 12:40:46.000000000 +0200
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls99default	2010-10-02 12:42:06.000000000 +0200
+@@ -1,5 +1,10 @@
++{
++
++$anonAccess = (($ldap{'AnonymousAccess'} || 'enabled')  eq 'enabled') ? 'read':'none';
++
++}
+ access to *
+         by users        read
+-        by anonymous    read
++        by anonymous    {"$anonAccess";}
+         by *            none
+ 
