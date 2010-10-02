@@ -1,0 +1,9 @@
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls99default.users_acl	2010-10-02 12:35:16.000000000 +0200
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/etc/openldap/slapd.conf/95acls99default	2010-10-02 12:36:41.000000000 +0200
+@@ -1,5 +1,5 @@
+ access to *
+-        by self         read
++        by users        read
+         by anonymous    read
+         by *            none
+ 
