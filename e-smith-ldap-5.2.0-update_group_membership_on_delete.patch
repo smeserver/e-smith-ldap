@@ -1,0 +1,20 @@
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-delete.update_group_membership_on_delete	2010-10-11 23:39:46.000000000 +0200
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-delete	2010-10-11 23:41:42.000000000 +0200
+@@ -114,6 +114,17 @@
+     $ldap->delete($mesg->entry(0));
+ }
+ 
++# Remove group membership for the account we are deleting
++$mesg = $ldap->search( base=> "ou=Groups,$base", filter => "(memberUid=$name)", scope => 'one' );
++if ($mesg->code && $mesg->code != 32)
++{   
++    warn "Failed ldap search memberUid=$name,ou=Groups,$base: ", $mesg->error;
++}
++else
++{   
++    $ldap->delete($_, 'memberUid' => [ $name ] ) foreach $mesg->entries();
++}
++
+ $ldap->unbind;
+ 
+ exit (0);
