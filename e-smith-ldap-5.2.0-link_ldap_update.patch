@@ -1,21 +1,13 @@
---- e-smith-ldap-5.2.0/createlinks.link_ldap_update	2010-10-07 19:56:26.000000000 +0200
-+++ e-smith-ldap-5.2.0/createlinks	2010-10-07 20:07:09.000000000 +0200
-@@ -18,6 +18,7 @@
- event_link("ldap-delete", "group-delete", "25");
- event_link("ldap-update", "user-create", "25");
- event_link("ldap-delete", "user-delete", "25");
-+event_link("ldap-update", "user-delete", "35");
- event_link("ldap-update", "user-lock", "25");
- 
- event_link("ldap-update", "user-modify", "25");
-@@ -25,6 +26,13 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/createlinks mezzanine_patched_e-smith-ldap-5.2.0/createlinks
+--- e-smith-ldap-5.2.0/createlinks	2010-10-11 20:39:52.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/createlinks	2010-10-11 20:39:32.000000000 +0200
+@@ -25,6 +25,12 @@
  event_link("ldap-update", "group-modify", "25");
  event_link("ldap-update", "password-modify", "25");
  
 +event_link("ldap-update", "ibay-create", "25");
 +event_link("ldap-update", "ibay-modify", "25");
 +event_link("ldap-delete", "ibay-delete", "25");
-+event_link("ldap-update", "ibay-delete", "35");
 +
 +event_link("ldap-update", "machine-account-create", "25");
 +

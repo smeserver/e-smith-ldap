@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.58 2010/10/11 17:43:42 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.59 2010/10/11 18:44:05 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 46
+%define release 47
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -68,6 +68,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Oct 7 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-47.sme
+- Don't call ldap-update on deleted accounts [SME: 6239]
+
 * Thu Oct 7 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-46.sme
 - Link ldap-update scripts in needed events [SME: 6239]
 
