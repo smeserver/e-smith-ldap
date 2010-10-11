@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.57 2010/10/02 11:15:05 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.58 2010/10/11 17:43:42 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 45
+%define release 46
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -54,6 +54,7 @@ Patch40: e-smith-ldap-5.2.0-anonymous_acl.patch
 Patch41: e-smith-ldap-5.2.0-users_acl.patch
 Patch42: e-smith-ldap-5.2.0-toggle_anonymous_access.patch
 Patch43: e-smith-ldap-5.2.0-fix_anonymous_toggle.patch
+Patch44: e-smith-ldap-5.2.0-link_ldap_update.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -67,6 +68,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Oct 7 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-46.sme
+- Link ldap-update scripts in needed events [SME: 6239]
+
 * Sat Oct 2 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-45.sme
 - Fix toggle anonymous access [SME: 6255]
 
@@ -902,6 +906,7 @@ e-smith server and gateway software - LDAP module.
 %patch41 -p1
 %patch42 -p1
 %patch43 -p1
+%patch44 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
