@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.60 2010/10/11 21:49:33 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.61 2010/10/13 17:23:04 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 48
+%define release 49
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -56,6 +56,7 @@ Patch42: e-smith-ldap-5.2.0-toggle_anonymous_access.patch
 Patch43: e-smith-ldap-5.2.0-fix_anonymous_toggle.patch
 Patch44: e-smith-ldap-5.2.0-link_ldap_update.patch
 Patch45: e-smith-ldap-5.2.0-update_group_membership_on_delete.patch
+Patch46: e-smith-ldap-5.2.0-ldap_update_later.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -69,6 +70,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Oct 13 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-49.sme
+- call ldap-update later during group and user creation [SME: 6284]
+
 * Thu Oct 7 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-48.sme
 - Update group membership for deleted accounts [SME: 6276]
 
@@ -915,6 +919,7 @@ e-smith server and gateway software - LDAP module.
 %patch43 -p1
 %patch44 -p1
 %patch45 -p1
+%patch46 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
