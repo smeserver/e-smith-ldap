@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.61 2010/10/13 17:23:04 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.62 2010/10/14 20:47:13 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 49
+%define release 50
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -57,6 +57,7 @@ Patch43: e-smith-ldap-5.2.0-fix_anonymous_toggle.patch
 Patch44: e-smith-ldap-5.2.0-link_ldap_update.patch
 Patch45: e-smith-ldap-5.2.0-update_group_membership_on_delete.patch
 Patch46: e-smith-ldap-5.2.0-ldap_update_later.patch
+Patch47: e-smith-ldap-5.2.0-allow_authenticated_users_to_read_attrs.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -70,6 +71,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Oct 14 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-50.sme
+- Allow authenticated users to read posixAccount and shadowAccount attrs [SME: 6254]
+
 * Wed Oct 13 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-49.sme
 - call ldap-update later during group and user creation [SME: 6284]
 
@@ -920,6 +924,7 @@ e-smith server and gateway software - LDAP module.
 %patch44 -p1
 %patch45 -p1
 %patch46 -p1
+%patch47 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
