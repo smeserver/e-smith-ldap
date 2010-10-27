@@ -1,0 +1,161 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.add_www_move_nobody e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.add_www_move_nobody	2010-10-27 10:22:53.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-10-27 10:34:49.000000000 -0600
+@@ -164,6 +164,69 @@ foreach my $obj ( qw(Users Groups Comput
+ }
+ 
+ #------------------------------------------------------------
++# Ensure nobody, shared, www objects are there
++#------------------------------------------------------------
++foreach my $user (qw/www/){
++    my $dn = "cn=$group,ou=Users,$base";
++    utf8::upgrade($dn);
++    $updates->{$dn}->{objectClass} = ['account', 'posixAccount', 'shadowAccount'];
++
++    # Read information from getent passwd
++    @{$updates->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($key);
++    $updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
++    $desc = $updates->{$dn}->{cn} = $updates->{$dn}->{gecos};
++
++    # Samba parameters if we find the samba.schema
++    if ( -f "$schema" and -x '/usr/bin/pdbedit' )
++    {
++        my $line = `/usr/bin/pdbedit -wu '$key' 2> /dev/null`;
++        chomp($line);
++        if ($line)
++        {
++            @{$updates->{$dn}}{'junk','junk','sambaLMPassword','sambaNTPassword'} = split(/:/,$line);
++            foreach $line (`/usr/bin/pdbedit -vu '$key' 2> /dev/null`)
++            {
++                chomp($line);
++                $updates->{$dn}->{sambaSID} = $1 if $line =~ m{User SID:\s+(S-.*)$};
++                $updates->{$dn}->{displayName} = $1 if $line =~ m{Full Name:\s+(.*)$};
++                $updates->{$dn}->{sambaPrimaryGroupSID} = $1 if $line =~ m{Primary Group SID:\s+(S-.*)$};
++                $updates->{$dn}->{sambaAcctFlags} = $1 if $line =~ m{Account Flags:\s+(.*)$};
++                $updates->{$dn}->{sambaPwdLastSet} = str2time($1) if $line =~ m{Password last set:\s+(.*)$};
++            }
++            push @{$updates->{$dn}->{objectClass}}, 'sambaSamAccount';
++        }
++    }
++}
++endpwent();
++
++foreach my $group (qw/nobody shared www/){
++    my $dn = "cn=$group,ou=Groups,$base";
++    utf8::upgrade($dn);
++    $updates->{$dn}->{objectClass} = ['posixGroup'];
++
++    # Read information from getent group
++    @{$updates->{$dn}}{'cn','userPassword','gidNumber','memberUid'} = getgrnam($group);
++    $updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
++    $updates->{$dn}->{memberUid} = [ split /\s+/, $updates->{$dn}->{memberUid} ];
++
++    # Ensure groups have the needed properties
++    if ($group eq 'shared'){
++        push @{$updates->{$dn}->{objectClass}}, 'mailboxRelatedObject';
++        $updates->{$dn}->{mail} = "everyone\@$domain";
++    }
++
++    # Samba parameters if we find the samba.schema
++    if ( -f "$schema" and exists $groupmap->{$group} )
++    {   
++        push @{$updates->{$dn}->{objectClass}}, 'sambaGroupMapping';
++        $updates->{$dn}->{displayName} = $groupmap->{$group}->{name};
++        $updates->{$dn}->{sambaSID} = $groupmap->{$group}->{sid};
++        $updates->{$dn}->{sambaGroupType} = '2';
++    }
++}
++endgrent();
++
++#------------------------------------------------------------
+ # Create a list of updates that need to happen
+ #------------------------------------------------------------
+ my $updates;
+@@ -274,29 +337,6 @@ endpwent();
+ endgrent();
+ 
+ 
+-# Nobody and shared are special groups used by samba
+-foreach my $group (qw/nobody shared/){
+-    my $dn = "cn=$group,ou=Groups,$base";
+-    @{$updates->{$dn}}{'cn','userPassword','gidNumber','memberUid'} = getgrnam($group);
+-    utf8::upgrade($dn);
+-    $updates->{$dn}->{objectClass} = ['posixGroup'];
+-    if ($group eq 'shared'){
+-        push @{$updates->{$dn}->{objectClass}}, 'mailboxRelatedObject';
+-        $updates->{$dn}->{mail} = "everyone\@$domain";
+-    }
+-    $updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
+-    $updates->{$dn}->{memberUid} = [ split /\s+/, $updates->{$dn}->{memberUid} ];
+-    if ( -f "$schema" and exists $groupmap->{$group} )
+-    {   
+-        push @{$updates->{$dn}->{objectClass}}, 'sambaGroupMapping';
+-        $updates->{$dn}->{displayName} = $groupmap->{$group}->{name};
+-        $updates->{$dn}->{sambaSID} = $groupmap->{$group}->{sid};
+-        $updates->{$dn}->{sambaGroupType} = '2';
+-    }
+-}
+-endgrent();
+-
+-
+ #------------------------------------------------------------
+ # Update LDAP database entry.
+ #------------------------------------------------------------
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.add_www_move_nobody e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.add_www_move_nobody	2010-10-27 10:22:53.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-10-27 10:48:06.000000000 -0600
+@@ -81,6 +81,21 @@
+     }
+     endpwent();
+ 
++    # www is a special user for all accounts
++    foreach my $user (qw/www/)
++    {   
++        $dn = "uid=$key,ou=Users,$ldapBase";
++        utf8::upgrade($dn);
++
++        $dnmap->{$user}->{user} = $dn;
++
++        $ldif->{$dn}->{objectClass} = [ qw(account posixAccount shadowAccount) ];
++        @{$ldif->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($key);
++        $ldif->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $ldif->{$dn}->{userPassword} =~ m/^{/;
++        $ldif->{$dn}->{cn} = $ldif->{$dn}->{gecos} || '';
++    }
++    endpwent();
++
+     # Read in group details
+     while(my ($key,$pwd,$gid,$members) = getgrent())
+     {
+@@ -110,23 +125,26 @@
+     endgrent();
+ 
+     # Nobody and shared are special groups used by samba
+-    foreach my $group (qw/nobody shared/)
++    foreach my $group (qw/nobody shared www/)
+     {   
+-        my $dn = "cn=$group,ou=Groups,$ldapBase";
++        $dn = "cn=$group,ou=Groups,$ldapBase";
+         utf8::upgrade($dn);
++
+         $dnmap->{$group}->{group} = $dn;
++
++        $ldif->{$dn}->{objectClass} = [ qw(posixGroup) ];
+         @{$ldif->{$dn}}{'cn','userPassword','gidNumber','memberUid'} = getgrnam($group);
+-        push @{$ldif->{$dn}->{objectClass}}, 'posixGroup';
++        $ldif->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $ldif->{$dn}->{userPassword} =~ m/^\{/;
++        $ldif->{$dn}->{description} = $ldif->{$dnmap->{$key}->{user}}->{cn} if exists $ldif->{$dnmap->{$key}->{user}}->{cn};
++        $ldif->{$dn}->{memberUid} = [ split /\s+/, $ldif->{$dn}->{memberUid} ];
++
+         if ($group eq 'shared'){
+             push @{$ldif->{$dn}->{objectClass}}, 'mailboxRelatedObject';
+             $ldif->{$dn}->{mail} = "everyone\@$DomainName";
+         }
+-        $ldif->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $ldif->{$dn}->{userPassword} =~ m/^\{/;
+-        $ldif->{$dn}->{memberUid} = [ split /\s+/, $ldif->{$dn}->{memberUid} ];
+     }
+     endgrent();
+ 
+-
+     # Read in samba user details
+     if ( -f "$schema" and -x '/usr/bin/pdbedit' )
+     {
