@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.62 2010/10/14 20:47:13 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.63 2010/10/27 10:03:20 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 50
+%define release 51
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -58,6 +58,7 @@ Patch44: e-smith-ldap-5.2.0-link_ldap_update.patch
 Patch45: e-smith-ldap-5.2.0-update_group_membership_on_delete.patch
 Patch46: e-smith-ldap-5.2.0-ldap_update_later.patch
 Patch47: e-smith-ldap-5.2.0-allow_authenticated_users_to_read_attrs.patch
+Patch48: e-smith-ldap-5.2.0-add_nobody_and_shared_in_ldap.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -71,6 +72,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Oct 27 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-51.sme
+- Add nobody and shared groups in LDAP [SME: 6310]
+
 * Thu Oct 14 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-50.sme
 - Allow authenticated users to read posixAccount and shadowAccount attrs [SME: 6254]
 
@@ -925,6 +929,7 @@ e-smith server and gateway software - LDAP module.
 %patch45 -p1
 %patch46 -p1
 %patch47 -p1
+%patch48 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

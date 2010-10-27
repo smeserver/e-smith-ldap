@@ -1,0 +1,30 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-10-27 09:21:50.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-10-27 09:21:35.000000000 +0200
+@@ -273,6 +273,26 @@
+ endpwent();
+ endgrent();
+ 
++
++# Nobody and shared are special groups used by samba
++foreach my $group (qw/nobody shared/){
++    my $dn = "cn=$group,ou=Groups,$base";
++    @{$updates->{$dn}}{'cn','userPassword','gidNumber','memberUid'} = getgrnam($group);
++    utf8::upgrade($dn);
++    $updates->{$dn}->{objectClass} = ['posixGroup', 'mailboxRelatedObject'];
++    $updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
++    $updates->{$dn}->{memberUid} = [ split /\s+/, $updates->{$dn}->{memberUid} ];
++    if ( -f "$schema" and exists $groupmap->{$group} )
++    {   
++        push @{$updates->{$dn}->{objectClass}}, 'sambaGroupMapping';
++        $updates->{$dn}->{displayName} = $groupmap->{$group}->{name};
++        $updates->{$dn}->{sambaSID} = $groupmap->{$group}->{sid};
++        $updates->{$dn}->{sambaGroupType} = '2';
++    }
++}
++endgrent();
++
++
+ #------------------------------------------------------------
+ # Update LDAP database entry.
+ #------------------------------------------------------------
