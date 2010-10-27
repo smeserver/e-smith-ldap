@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.63 2010/10/27 10:03:20 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.64 2010/10/27 14:22:16 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 51
+%define release 52
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -59,6 +59,7 @@ Patch45: e-smith-ldap-5.2.0-update_group_membership_on_delete.patch
 Patch46: e-smith-ldap-5.2.0-ldap_update_later.patch
 Patch47: e-smith-ldap-5.2.0-allow_authenticated_users_to_read_attrs.patch
 Patch48: e-smith-ldap-5.2.0-add_nobody_and_shared_in_ldap.patch
+Patch49: e-smith-ldap-5.2.0-fix_nobody_and_shared_group.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -72,6 +73,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Oct 27 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-52.sme
+- Fixes for nobody and shared groups [SME: 6310]
+
 * Wed Oct 27 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-51.sme
 - Add nobody and shared groups in LDAP [SME: 6310]
 
@@ -930,6 +934,7 @@ e-smith server and gateway software - LDAP module.
 %patch46 -p1
 %patch47 -p1
 %patch48 -p1
+%patch49 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

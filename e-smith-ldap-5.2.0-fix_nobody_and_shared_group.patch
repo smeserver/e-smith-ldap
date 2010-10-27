@@ -1,0 +1,44 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-10-27 16:01:24.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-10-27 15:58:33.000000000 +0200
+@@ -279,7 +279,11 @@
+     my $dn = "cn=$group,ou=Groups,$base";
+     @{$updates->{$dn}}{'cn','userPassword','gidNumber','memberUid'} = getgrnam($group);
+     utf8::upgrade($dn);
+-    $updates->{$dn}->{objectClass} = ['posixGroup', 'mailboxRelatedObject'];
++    $updates->{$dn}->{objectClass} = ['posixGroup'];
++    if ($group eq 'shared'){
++        push @{$updates->{$dn}->{objectClass}}, 'mailboxRelatedObject';
++        $updates->{$dn}->{mail} = "everyone\@$domain";
++    }
+     $updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
+     $updates->{$dn}->{memberUid} = [ split /\s+/, $updates->{$dn}->{memberUid} ];
+     if ( -f "$schema" and exists $groupmap->{$group} )
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-10-27 16:01:24.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-10-27 16:01:22.000000000 +0200
+@@ -109,6 +109,24 @@
+     }
+     endgrent();
+ 
++    # Nobody and shared are special groups used by samba
++    foreach my $group (qw/nobody shared/)
++    {   
++        my $dn = "cn=$group,ou=Groups,$ldapBase";
++        utf8::upgrade($dn);
++        $dnmap->{$group}->{group} = $dn;
++        @{$ldif->{$dn}}{'cn','userPassword','gidNumber','memberUid'} = getgrnam($group);
++        push @{$ldif->{$dn}->{objectClass}}, 'posixGroup';
++        if ($group eq 'shared'){
++            push @{$ldif->{$dn}->{objectClass}}, 'mailboxRelatedObject';
++            $ldif->{$dn}->{mail} = "everyone\@$DomainName";
++        }
++        $ldif->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $ldif->{$dn}->{userPassword} =~ m/^\{/;
++        $ldif->{$dn}->{memberUid} = [ split /\s+/, $ldif->{$dn}->{memberUid} ];
++    }
++    endgrent();
++
++
+     # Read in samba user details
+     if ( -f "$schema" and -x '/usr/bin/pdbedit' )
+     {
