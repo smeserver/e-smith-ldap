@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.65 2010/10/27 19:51:58 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.66 2010/10/28 07:39:37 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 53
+%define release 54
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -61,6 +61,7 @@ Patch47: e-smith-ldap-5.2.0-allow_authenticated_users_to_read_attrs.patch
 Patch48: e-smith-ldap-5.2.0-add_nobody_and_shared_in_ldap.patch
 Patch49: e-smith-ldap-5.2.0-fix_nobody_and_shared_group.patch
 Patch50: e-smith-ldap-5.2.0-add_www_move_nobody.patch
+Patch51: e-smith-ldap-5.2.0-fix_ldap_update.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -74,6 +75,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Oct 28 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-54.sme
+- Fix minor errors in ldap-update [SME: 6312]
+
 * Wed Oct 27 2010 Shad L. Lords <slords@mail.com> 5.2.0-53.sme
 - Add www user/group to ldap [SME: 6312]
 
@@ -940,6 +944,7 @@ e-smith server and gateway software - LDAP module.
 %patch48 -p1
 %patch49 -p1
 %patch50 -p1
+%patch51 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

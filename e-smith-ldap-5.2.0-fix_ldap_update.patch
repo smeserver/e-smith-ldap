@@ -1,0 +1,47 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-10-28 09:33:15.000000000 +0200
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-10-28 09:33:13.000000000 +0200
+@@ -163,28 +163,30 @@
+     warn "failed to add/update entry ou=$obj,$base: ", $result->error if $result->code;
+ }
+ 
++my $updates;
++
+ #------------------------------------------------------------
+ # Ensure nobody, shared, www objects are there
+ #------------------------------------------------------------
+ foreach my $user (qw/www/){
+-    my $dn = "cn=$group,ou=Users,$base";
++    my $dn = "uid=$user,ou=Users,$base";
+     utf8::upgrade($dn);
+     $updates->{$dn}->{objectClass} = ['account', 'posixAccount', 'shadowAccount'];
+ 
+     # Read information from getent passwd
+-    @{$updates->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($key);
++    @{$updates->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($user);
+     $updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
+-    $desc = $updates->{$dn}->{cn} = $updates->{$dn}->{gecos};
++    my $desc = $updates->{$dn}->{cn} = $updates->{$dn}->{gecos};
+ 
+     # Samba parameters if we find the samba.schema
+     if ( -f "$schema" and -x '/usr/bin/pdbedit' )
+     {
+-        my $line = `/usr/bin/pdbedit -wu '$key' 2> /dev/null`;
++        my $line = `/usr/bin/pdbedit -wu '$user' 2> /dev/null`;
+         chomp($line);
+         if ($line)
+         {
+             @{$updates->{$dn}}{'junk','junk','sambaLMPassword','sambaNTPassword'} = split(/:/,$line);
+-            foreach $line (`/usr/bin/pdbedit -vu '$key' 2> /dev/null`)
++            foreach $line (`/usr/bin/pdbedit -vu '$user' 2> /dev/null`)
+             {
+                 chomp($line);
+                 $updates->{$dn}->{sambaSID} = $1 if $line =~ m{User SID:\s+(S-.*)$};
+@@ -229,7 +231,6 @@
+ #------------------------------------------------------------
+ # Create a list of updates that need to happen
+ #------------------------------------------------------------
+-my $updates;
+ foreach my $acct (@accounts)
+ {
+     my $key = $acct->key;
