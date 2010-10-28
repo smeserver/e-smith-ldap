@@ -21,7 +21,7 @@ diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/e-smith/events/acti
 +    @{$updates->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($user);
      $updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
 -    $desc = $updates->{$dn}->{cn} = $updates->{$dn}->{gecos};
-+    my $desc = $updates->{$dn}->{cn} = $updates->{$dn}->{gecos};
++    $updates->{$dn}->{cn} = $updates->{$dn}->{gecos};
  
      # Samba parameters if we find the samba.schema
      if ( -f "$schema" and -x '/usr/bin/pdbedit' )
