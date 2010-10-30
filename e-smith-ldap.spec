@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.67 2010/10/30 00:34:57 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.68 2010/10/30 14:03:32 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 55
+%define release 56
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -78,6 +78,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Sat Oct 30 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-56.sme
+- Fix a small typo in reset-ldap-bootstrap
+
 * Fri Oct 29 2010 Shad L. Lords <slords@mail.com> 5.2.0-55.sme
 - Add ldap.init script to allow update on reconfig/reboot [SME: 6231]
 

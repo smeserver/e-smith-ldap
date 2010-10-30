@@ -59,7 +59,7 @@ diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/reset-ldap-bootstrap
 +# Please visit our web site www.mitel.com/sme/ for details.
 +#----------------------------------------------------------------------
 +
-+/sbin/e-smith/conig delprop ldap Bootstrap
++/sbin/e-smith/config delprop ldap Bootstrap
 diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/set-ldap-bootstrap.ldap-init-script e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/set-ldap-bootstrap
 --- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/set-ldap-bootstrap.ldap-init-script	2010-10-29 18:13:51.000000000 -0600
 +++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/set-ldap-bootstrap	2010-10-29 18:15:38.000000000 -0600
