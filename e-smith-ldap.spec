@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.66 2010/10/28 07:39:37 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.67 2010/10/30 00:34:57 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 54
+%define release 55
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -62,11 +62,14 @@ Patch48: e-smith-ldap-5.2.0-add_nobody_and_shared_in_ldap.patch
 Patch49: e-smith-ldap-5.2.0-fix_nobody_and_shared_group.patch
 Patch50: e-smith-ldap-5.2.0-add_www_move_nobody.patch
 Patch51: e-smith-ldap-5.2.0-fix_ldap_update.patch
+Patch52: e-smith-ldap-5.2.0-ldap-init-script.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
 Requires: e-smith-lib >= 1.15.1-16
-Requires: openldap >= 2.0.0, perl(Net::LDAP)
+Requires: openldap >= 2.0.0
+Requires: openldap-clients
+Requires: perl(Net::LDAP)
 Requires: e-smith-formmagick >= 1.4.0-9
 BuildRequires: e-smith-devtools >= 1.13.1-03
 AutoReqProv: no
@@ -75,6 +78,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Fri Oct 29 2010 Shad L. Lords <slords@mail.com> 5.2.0-55.sme
+- Add ldap.init script to allow update on reconfig/reboot [SME: 6231]
+
 * Thu Oct 28 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-54.sme
 - Fix minor errors in ldap-update [SME: 6312]
 
@@ -945,12 +951,13 @@ e-smith server and gateway software - LDAP module.
 %patch49 -p1
 %patch50 -p1
 %patch51 -p1
+%patch52 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
 perl createlinks
 mkdir -p root/etc/rc.d/rc7.d
-ln -s /etc/rc.d/init.d/e-smith-service root/etc/rc.d/rc7.d/S80ldap
+ln -s /etc/rc.d/init.d/e-smith-service root/etc/rc.d/rc7.d/S77ldap
 mkdir -p root/home/e-smith/db/ldap
 
 mkdir -p root/etc/rc.d/init.d/supervise
@@ -963,6 +970,7 @@ touch root/var/service/ldap/down
 mkdir -p root/var/log/bdb
 mkdir -p root/var/log/ldap
 mkdir -p root/var/service/ldap/ssl
+mkdir -p root/etc/e-smith/ldap/init
 
 %install
 rm -rf $RPM_BUILD_ROOT

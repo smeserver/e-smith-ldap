@@ -1,0 +1,179 @@
+diff -up e-smith-ldap-5.2.0/createlinks.ldap-init-script e-smith-ldap-5.2.0/createlinks
+--- e-smith-ldap-5.2.0/createlinks.ldap-init-script	2010-10-29 18:09:21.000000000 -0600
++++ e-smith-ldap-5.2.0/createlinks	2010-10-29 18:09:35.000000000 -0600
+@@ -29,6 +29,8 @@ event_link("ldap-update", "ibay-create",
+ event_link("ldap-update", "ibay-modify", "25");
+ event_link("ldap-delete", "ibay-delete", "25");
+ 
++event_link("ldap-update", "bootstrap-ldap-save", "25");
++
+ event_link("ldap-update", "machine-account-create", "25");
+ 
+ event_link("ldap-dump", "pre-backup", "30");
+@@ -42,4 +44,9 @@ safe_symlink("sigusr1", "root/etc/e-smit
+ 
+ event_link("ldap-delete-dumps", "pre-restore", "25");
+ 
++event_link("set-ldap-bootstrap", "bootstrap-console-save", "95");
++event_link("reset-ldap-bootstrap", "bootstrap-ldap-save", "95");
++
++service_link_enhanced("ldap.init", "S78", "7");
++
+ exit 0;
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.ldap-init-script e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.ldap-init-script	2010-10-29 18:12:32.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-10-29 18:12:35.000000000 -0600
+@@ -64,7 +64,7 @@ my $map = { 'FirstName' => 'givenName',
+ my @accounts;
+ my $account;
+ my $event = shift || die "Event name must be specified";
+-if ($event eq 'ldap-update')
++if ($event eq 'ldap-update' or $event eq 'bootstrap-ldap-save')
+ {
+     @accounts = ($a->users, $a->groups, $a->ibays, $a->get_all_by_prop(type => 'machine'));
+     push(@accounts, $a->get('admin'));
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/reset-ldap-bootstrap.ldap-init-script e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/reset-ldap-bootstrap
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/reset-ldap-bootstrap.ldap-init-script	2010-10-29 18:14:45.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/reset-ldap-bootstrap	2010-10-29 18:15:16.000000000 -0600
+@@ -0,0 +1,24 @@
++#!/bin/sh
++#----------------------------------------------------------------------
++# copyright (C) 2010 Firewall-Services
++# daniel@firewall-services.com
++# 
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 2 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program; if not, write to the Free Software
++# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
++# 
++# Technical support for this program is available from Mitel Networks 
++# Please visit our web site www.mitel.com/sme/ for details.
++#----------------------------------------------------------------------
++
++/sbin/e-smith/conig delprop ldap Bootstrap
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/set-ldap-bootstrap.ldap-init-script e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/set-ldap-bootstrap
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/set-ldap-bootstrap.ldap-init-script	2010-10-29 18:13:51.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/set-ldap-bootstrap	2010-10-29 18:15:38.000000000 -0600
+@@ -0,0 +1,24 @@
++#!/bin/sh
++#----------------------------------------------------------------------
++# copyright (C) 2010 Firewall-Services
++# daniel@firewall-services.com
++# 
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 2 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program; if not, write to the Free Software
++# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
++# 
++# Technical support for this program is available from Mitel Networks 
++# Please visit our web site www.mitel.com/sme/ for details.
++#----------------------------------------------------------------------
++
++/sbin/e-smith/config setprop ldap Bootstrap run
+diff -up e-smith-ldap-5.2.0/root/etc/rc.d/init.d/ldap.init.ldap-init-script e-smith-ldap-5.2.0/root/etc/rc.d/init.d/ldap.init
+--- e-smith-ldap-5.2.0/root/etc/rc.d/init.d/ldap.init.ldap-init-script	2010-10-29 18:13:13.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/rc.d/init.d/ldap.init	2010-10-29 18:04:47.000000000 -0600
+@@ -0,0 +1,85 @@
++#----------------------------------------------------------------------
++# copyright (C) 2010 Firewall-Services
++# daniel@firewall-services.com
++# 
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 2 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program; if not, write to the Free Software
++# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
++# 
++# Technical support for this program is available from Mitel Networks 
++# Please visit our web site www.mitel.com/sme/ for details.
++#----------------------------------------------------------------------
++
++# Source function library.
++. /etc/rc.d/init.d/functions
++
++if [ $# -lt 1 ]; then
++    echo "Usage: $0 <start|restart>" 1>&2
++    exit 1
++fi
++# We should only do something if $1 is 'start'.
++if [ $1 != "start" ] && [ $1 != "restart" ]; then
++    exit 0
++fi
++
++for i in $(seq 1 10)
++do
++    if [ $(/usr/bin/pgrep -f slapd | wc -l) -ge 1 ]
++    then
++        exit_value=0
++        for link in $((echo /etc/e-smith/ldap/init/50bootstrap; find /etc/e-smith/ldap/init -type f -o -type l) | sort)
++        do  
++            F=$(basename $link | sed 's/S\?[0-9][0-9]_\?//')
++            case $F in
++                bootstrap)
++                BOOTSTRAP=$(/sbin/e-smith/db configuration getprop ldap Bootstrap)
++                if [ "$BOOTSTRAP" == "run" ]; then
++                    action "Running bootstrap-ldap-save" /sbin/e-smith/signal-event bootstrap-ldap-save
++                fi
++                ;;
++                *.ldif)
++                action "Loading $F into ldap" perl -e '
++                    use esmith::util;
++                    use esmith::ConfigDB;
++
++                    my $c = esmith::ConfigDB->open_ro;
++                    my $domain = $c->get("DomainName")
++                        || die("Could not determine domain name");
++                    my $base = esmith::util::ldapBase ($domain->value);
++                    my $pw = esmith::util::LdapPassword();
++
++                    open (STDERR, "|/usr/bin/logger -p local1.info -t ldap.init");
++                    open (STDOUT, ">&STDERR");
++                    exec "/usr/bin/ldapadd", "-c", "-x", "-H", "ldap://localhost/",
++                         "-D", "cn=root,$base", "-w", "$pw";' < $link && /bin/rm $link
++                ;;
++                *)
++                action "Loading $F into ldap" perl -e '
++                    open (STDERR, "|/usr/bin/logger -p local1.info -t ldap.init");
++                    open (STDOUT, ">&STDERR");
++                    exec shift; ' $link && /bin/rm $link
++                ;;
++            esac
++            # Record any failure for the final return value.
++            if [ $? -ne 0 ]; then
++                exit_value=1
++            fi
++        done
++
++        exit $exit_value
++    fi
++    echo "Waiting for slapd to startup" >&2
++    sleep 2
++done
++
++exit 1
