@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.69 2010/10/30 14:04:50 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.70 2010/11/02 13:43:38 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 56
+%define release 57
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -63,6 +63,7 @@ Patch49: e-smith-ldap-5.2.0-fix_nobody_and_shared_group.patch
 Patch50: e-smith-ldap-5.2.0-add_www_move_nobody.patch
 Patch51: e-smith-ldap-5.2.0-fix_ldap_update.patch
 Patch52: e-smith-ldap-5.2.0-ldap-init-script.patch
+Patch53: e-smith-ldap-5.2.0-enable_ldap_init.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -78,6 +79,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Tue Nov 02 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-57.sme
+- Enable the new ldap.init service [SME: 6231]
+
 * Sat Oct 30 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-56.sme
 - Fix a small typo in reset-ldap-bootstrap [SME: 6231]
 
@@ -955,6 +959,7 @@ e-smith server and gateway software - LDAP module.
 %patch50 -p1
 %patch51 -p1
 %patch52 -p1
+%patch53 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

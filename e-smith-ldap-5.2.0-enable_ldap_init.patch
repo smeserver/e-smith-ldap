@@ -1,0 +1,8 @@
+--- e-smith-ldap-5.2.0/root/etc/e-smith/db/configuration/defaults/ldap.init/type.enable_ldap_init	2010-11-02 14:37:27.000000000 +0100
++++ e-smith-ldap-5.2.0/root/etc/e-smith/db/configuration/defaults/ldap.init/type	2010-11-02 14:37:38.000000000 +0100
+@@ -0,0 +1 @@
++service
+--- e-smith-ldap-5.2.0/root/etc/e-smith/db/configuration/defaults/ldap.init/status.enable_ldap_init	2010-11-02 14:37:20.000000000 +0100
++++ e-smith-ldap-5.2.0/root/etc/e-smith/db/configuration/defaults/ldap.init/status	2010-11-02 14:37:45.000000000 +0100
+@@ -0,0 +1 @@
++enabled
