@@ -1,0 +1,35 @@
+diff -up e-smith-ldap-5.2.0/createlinks.unix-cleanup e-smith-ldap-5.2.0/createlinks
+--- e-smith-ldap-5.2.0/createlinks.unix-cleanup	2010-11-02 09:15:20.000000000 -0600
++++ e-smith-ldap-5.2.0/createlinks	2010-11-02 09:14:30.000000000 -0600
+@@ -30,6 +30,7 @@ event_link("ldap-update", "ibay-modify",
+ event_link("ldap-delete", "ibay-delete", "25");
+ 
+ event_link("ldap-update", "bootstrap-ldap-save", "25");
++event_link("cleanup-unix-user-group", "bootstrap-ldap-save", "98");
+ 
+ event_link("ldap-update", "machine-account-create", "25");
+ 
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/cleanup-unix-user-group.unix-cleanup e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/cleanup-unix-user-group
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/cleanup-unix-user-group.unix-cleanup	2010-11-02 09:13:34.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/cleanup-unix-user-group	2010-11-02 09:13:20.000000000 -0600
+@@ -0,0 +1,20 @@
++#!/bin/bash -e
++
++ldapauth=$(/sbin/e-smith/config getprop ldap Authentication || echo disabled)
++
++# Exit unless ldap auth is enabled
++[ "$ldapauth" == "enabled" ] || exit 0
++
++# Users and group accounts are now stored in LDAP, so we need to delete them
++# from the old passwd / group / shadow database
++
++for USER in $(/usr/bin/getent passwd | sort | cut -d':' -f1 | uniq -d); do
++    /usr/sbin/luserdel -G $USER
++done
++
++for GROUP in $(/usr/bin/getent group | sort | cut -d':' -f1 | uniq -d); do
++    /usr/sbin/lgroupdel $GROUP
++done
++
++# And add the admin back in the root group, which is not in the LDAP database
++/usr/bin/gpasswd -a admin root

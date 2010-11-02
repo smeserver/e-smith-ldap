@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.70 2010/11/02 13:43:38 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.71 2010/11/02 17:03:38 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 57
+%define release 59
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -64,6 +64,8 @@ Patch50: e-smith-ldap-5.2.0-add_www_move_nobody.patch
 Patch51: e-smith-ldap-5.2.0-fix_ldap_update.patch
 Patch52: e-smith-ldap-5.2.0-ldap-init-script.patch
 Patch53: e-smith-ldap-5.2.0-enable_ldap_init.patch
+Patch54: e-smith-ldap-5.2.0-ldap-auth.patch
+Patch55: e-smith-ldap-5.2.0-unix-cleanup.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -79,6 +81,12 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Tue Nov 2 2010 Shad L. Lords <slords@mail.com> 5.2.0-59.sme
+- Remove unix users/groups if ldap is master [SME: 6325]
+
+* Tue Nov 2 2010 Shad L. Lords <slords@mail.com> 5.2.0-58.sme
+- Disable ldap-delete if ldap is master [SME: 6324]
+
 * Tue Nov 02 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-57.sme
 - Enable the new ldap.init service [SME: 6231]
 
@@ -960,6 +968,8 @@ e-smith server and gateway software - LDAP module.
 %patch51 -p1
 %patch52 -p1
 %patch53 -p1
+%patch54 -p1
+%patch55 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

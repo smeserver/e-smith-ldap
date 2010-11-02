@@ -1,0 +1,17 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/db/configuration/defaults/ldap/Authentication.ldap-auth e-smith-ldap-5.2.0/root/etc/e-smith/db/configuration/defaults/ldap/Authentication
+--- e-smith-ldap-5.2.0/root/etc/e-smith/db/configuration/defaults/ldap/Authentication.ldap-auth	2010-11-01 08:15:53.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/db/configuration/defaults/ldap/Authentication	2010-11-01 08:16:02.000000000 -0600
+@@ -0,0 +1 @@
++disabled
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-delete.ldap-auth e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-delete
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-delete.ldap-auth	2010-11-01 08:15:05.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-delete	2010-11-01 08:18:36.000000000 -0600
+@@ -29,6 +29,8 @@ use Net::LDAP;
+ 
+ my $db = esmith::ConfigDB->open_ro or die "Could not open config db";
+ 
++exit(0) if ($db->get('ldap')->prop('Authentication') || 'disabled') eq 'enabled';
++
+ unless ($db->get('ldap')->prop('status') eq "enabled" )
+ {
+     warn "Not running action script $0, LDAP service not enabled!\n";
