@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.72 2010/11/05 01:39:52 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.73 2010/11/05 05:13:58 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 60
+%define release 61
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -82,6 +82,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Nov 4 2010 Shad L. Lords <slords@mail.com> 5.2.0-61.sme
+- Apply correct patch for group descriptions/password [SME: 6337]
+
 * Thu Nov 4 2010 Shad L. Lords <slords@mail.com> 5.2.0-60.sme
 - groups don't have password, some don't have description [SME: 6337]
 

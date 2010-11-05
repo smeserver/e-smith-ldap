@@ -1,7 +1,40 @@
 diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.group-attrs e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
 diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.group-attrs e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
---- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.group-attrs	2010-11-04 19:32:27.000000000 -0600
-+++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-11-04 19:31:24.000000000 -0600
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.group-attrs e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.group-attrs	2010-11-04 23:03:07.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-11-04 23:05:21.000000000 -0600
+@@ -207,8 +207,7 @@ foreach my $group (qw/nobody shared www/
+     $updates->{$dn}->{objectClass} = ['posixGroup'];
+ 
+     # Read information from getent group
+-    @{$updates->{$dn}}{'cn','userPassword','gidNumber','memberUid'} = getgrnam($group);
+-    $updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
++    @{$updates->{$dn}}{'cn','junk','gidNumber','memberUid'} = getgrnam($group);
+     $updates->{$dn}->{memberUid} = [ split /\s+/, $updates->{$dn}->{memberUid} ];
+ 
+     # Ensure groups have the needed properties
+@@ -311,9 +310,7 @@ foreach my $acct (@accounts)
+ 	$updates->{$dn}->{objectClass} = ['posixGroup'];
+ 
+ 	# Read information from getent group
+-	@{$updates->{$dn}}{'cn','userPassword','gidNumber','memberUid'} = getgrnam($key);
+-	$updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
+-	$updates->{$dn}->{description} = $desc if $desc;
++	@{$updates->{$dn}}{'cn','junk','gidNumber','memberUid'} = getgrnam($key);
+ 	$updates->{$dn}->{memberUid} = [ split /\s+/, $updates->{$dn}->{memberUid} ];
+ 
+ 	# Ensure groups have the needed properties
+@@ -321,6 +318,7 @@ foreach my $acct (@accounts)
+ 	{
+ 	    push @{$updates->{$dn}->{objectClass}}, 'mailboxRelatedObject';
+ 	    $updates->{$dn}->{mail} = "$key\@$domain";
++	    $updates->{$dn}->{description} = $desc if $desc;
+ 	}
+ 
+ 	# Samba parameters if we find the samba.schema
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.group-attrs e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.group-attrs	2010-11-04 23:03:07.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-11-04 23:04:08.000000000 -0600
 @@ -97,7 +97,7 @@
      endpwent();
  
