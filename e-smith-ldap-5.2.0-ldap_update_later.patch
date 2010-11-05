@@ -1,14 +1,42 @@
---- e-smith-ldap-5.2.0/createlinks.ldap_update_later	2010-10-13 19:16:56.000000000 +0200
-+++ e-smith-ldap-5.2.0/createlinks	2010-10-13 19:19:14.000000000 +0200
-@@ -14,9 +14,9 @@
+diff -up e-smith-ldap-5.2.0/createlinks.ldap_update_later e-smith-ldap-5.2.0/createlinks
+diff -up e-smith-ldap-5.2.0/createlinks.ldap_update_later e-smith-ldap-5.2.0/createlinks
+--- e-smith-ldap-5.2.0/createlinks.ldap_update_later	2010-11-05 12:50:45.000000000 -0600
++++ e-smith-ldap-5.2.0/createlinks	2010-11-05 12:53:36.000000000 -0600
+@@ -14,22 +14,22 @@ templates2events("/etc/openldap/$_",
  	));
  }
  
 -event_link("ldap-update", "group-create", "25");
-+event_link("ldap-update", "group-create", "95");
- event_link("ldap-delete", "group-delete", "25");
+-event_link("ldap-delete", "group-delete", "25");
 -event_link("ldap-update", "user-create", "25");
+-event_link("ldap-delete", "user-delete", "25");
+-event_link("ldap-update", "user-lock", "25");
+-
+-event_link("ldap-update", "user-modify", "25");
+-event_link("ldap-update", "user-modify-admin", "25");
+-event_link("ldap-update", "group-modify", "25");
+-event_link("ldap-update", "password-modify", "25");
+-
+-event_link("ldap-update", "ibay-create", "25");
+-event_link("ldap-update", "ibay-modify", "25");
+-event_link("ldap-delete", "ibay-delete", "25");
++event_link("ldap-update", "group-create", "95");
++event_link("ldap-delete", "group-delete", "55");
 +event_link("ldap-update", "user-create", "95");
- event_link("ldap-delete", "user-delete", "25");
- event_link("ldap-update", "user-lock", "25");
++event_link("ldap-delete", "user-delete", "55");
++event_link("ldap-update", "user-lock", "55");
++
++event_link("ldap-update", "user-modify", "95");
++event_link("ldap-update", "user-modify-admin", "95");
++event_link("ldap-update", "group-modify", "95");
++event_link("ldap-update", "password-modify", "95");
++
++event_link("ldap-update", "ibay-create", "95");
++event_link("ldap-update", "ibay-modify", "95");
++event_link("ldap-delete", "ibay-delete", "55");
+ 
+-event_link("ldap-update", "machine-account-create", "25");
++event_link("ldap-update", "machine-account-create", "95");
+ 
+ event_link("ldap-dump", "pre-backup", "30");
  

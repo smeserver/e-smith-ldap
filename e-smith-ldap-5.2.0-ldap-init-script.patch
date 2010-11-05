@@ -2,12 +2,12 @@ diff -up e-smith-ldap-5.2.0/createlinks.ldap-init-script e-smith-ldap-5.2.0/crea
 --- e-smith-ldap-5.2.0/createlinks.ldap-init-script	2010-10-29 18:09:21.000000000 -0600
 +++ e-smith-ldap-5.2.0/createlinks	2010-10-29 18:09:35.000000000 -0600
 @@ -29,6 +29,8 @@ event_link("ldap-update", "ibay-create",
- event_link("ldap-update", "ibay-modify", "25");
- event_link("ldap-delete", "ibay-delete", "25");
+ event_link("ldap-update", "ibay-modify", "95");
+ event_link("ldap-delete", "ibay-delete", "55");
  
 +event_link("ldap-update", "bootstrap-ldap-save", "25");
 +
- event_link("ldap-update", "machine-account-create", "25");
+ event_link("ldap-update", "machine-account-create", "95");
  
  event_link("ldap-dump", "pre-backup", "30");
 @@ -42,4 +44,9 @@ safe_symlink("sigusr1", "root/etc/e-smit

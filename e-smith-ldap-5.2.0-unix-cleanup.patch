@@ -2,12 +2,12 @@ diff -up e-smith-ldap-5.2.0/createlinks.unix-cleanup e-smith-ldap-5.2.0/createli
 --- e-smith-ldap-5.2.0/createlinks.unix-cleanup	2010-11-02 09:15:20.000000000 -0600
 +++ e-smith-ldap-5.2.0/createlinks	2010-11-02 09:14:30.000000000 -0600
 @@ -30,6 +30,7 @@ event_link("ldap-update", "ibay-modify",
- event_link("ldap-delete", "ibay-delete", "25");
+ event_link("ldap-delete", "ibay-delete", "55");
  
  event_link("ldap-update", "bootstrap-ldap-save", "25");
 +event_link("cleanup-unix-user-group", "bootstrap-ldap-save", "98");
  
- event_link("ldap-update", "machine-account-create", "25");
+ event_link("ldap-update", "machine-account-create", "95");
  
 diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/cleanup-unix-user-group.unix-cleanup e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/cleanup-unix-user-group
 --- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/cleanup-unix-user-group.unix-cleanup	2010-11-02 09:13:34.000000000 -0600
