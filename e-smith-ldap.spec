@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.71 2010/11/02 17:03:38 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.72 2010/11/05 01:39:52 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 59
+%define release 60
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -66,6 +66,7 @@ Patch52: e-smith-ldap-5.2.0-ldap-init-script.patch
 Patch53: e-smith-ldap-5.2.0-enable_ldap_init.patch
 Patch54: e-smith-ldap-5.2.0-ldap-auth.patch
 Patch55: e-smith-ldap-5.2.0-unix-cleanup.patch
+Patch56: e-smith-ldap-5.2.0-group-attrs.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -81,6 +82,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Nov 4 2010 Shad L. Lords <slords@mail.com> 5.2.0-60.sme
+- groups don't have password, some don't have description [SME: 6337]
+
 * Tue Nov 2 2010 Shad L. Lords <slords@mail.com> 5.2.0-59.sme
 - Remove unix users/groups if ldap is master [SME: 6325]
 
@@ -970,6 +974,7 @@ e-smith server and gateway software - LDAP module.
 %patch53 -p1
 %patch54 -p1
 %patch55 -p1
+%patch56 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

@@ -1,0 +1,41 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.group-attrs e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.group-attrs e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.group-attrs	2010-11-04 19:32:27.000000000 -0600
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-11-04 19:31:24.000000000 -0600
+@@ -97,7 +97,7 @@
+     endpwent();
+ 
+     # Read in group details
+-    while(my ($key,$pwd,$gid,$members) = getgrent())
++    while(my ($key,undef,$gid,$members) = getgrent())
+     {
+         # skip non sme groups
+         $account = $a->get($key) || next;
+@@ -111,15 +111,14 @@
+ 
+         $ldif->{$dn}->{objectClass} = [ qw(posixGroup) ];
+         $ldif->{$dn}->{cn} = $key;
+-        $ldif->{$dn}->{userPassword} = ($pwd =~ m/^\{/) ? $pwd : "\{CRYPT\}$pwd";
+         $ldif->{$dn}->{gidNumber} = $gid;
+-        $ldif->{$dn}->{description} = $ldif->{$dnmap->{$key}->{user}}->{cn} if exists $ldif->{$dnmap->{$key}->{user}}->{cn};
+         $ldif->{$dn}->{memberUid} = [ split /\s+/, $members ];
+ 
+         if ($type eq 'group')
+         {
+             push @{$ldif->{$dn}->{objectClass}}, 'mailboxRelatedObject';
+             $ldif->{$dn}->{mail} = "$key\@$DomainName";
++            $ldif->{$dn}->{description} = $ldif->{$dnmap->{$key}->{user}}->{cn} if exists $ldif->{$dnmap->{$key}->{user}}->{cn};
+         }
+     }
+     endgrent();
+@@ -133,9 +132,7 @@
+         $dnmap->{$group}->{group} = $dn;
+ 
+         $ldif->{$dn}->{objectClass} = [ qw(posixGroup) ];
+-        @{$ldif->{$dn}}{'cn','userPassword','gidNumber','memberUid'} = getgrnam($group);
+-        $ldif->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $ldif->{$dn}->{userPassword} =~ m/^\{/;
+-        $ldif->{$dn}->{description} = $ldif->{$dnmap->{$key}->{user}}->{cn} if exists $ldif->{$dnmap->{$key}->{user}}->{cn};
++        @{$ldif->{$dn}}{'cn','junk','gidNumber','memberUid'} = getgrnam($group);
+         $ldif->{$dn}->{memberUid} = [ split /\s+/, $ldif->{$dn}->{memberUid} ];
+ 
+         if ($group eq 'shared'){
