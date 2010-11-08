@@ -1,0 +1,453 @@
+diff -up e-smith-ldap-5.2.0/createlinks.simple-ldap-update e-smith-ldap-5.2.0/createlinks
+--- e-smith-ldap-5.2.0/createlinks.simple-ldap-update	2010-11-08 11:48:06.000000000 -0700
++++ e-smith-ldap-5.2.0/createlinks	2010-11-08 11:48:42.000000000 -0700
+@@ -14,26 +14,27 @@ templates2events("/etc/openldap/$_",
+ 	));
+ }
+ 
+-event_link("ldap-update", "group-create", "95");
++event_link("ldap-update-simple", "group-create", "95");
++event_link("ldap-update-simple", "group-modify", "95");
+ event_link("ldap-delete", "group-delete", "55");
+-event_link("ldap-update", "user-create", "95");
++
++event_link("ldap-update-simple", "user-create", "95");
++event_link("ldap-update-simple", "user-modify", "95");
++event_link("ldap-update-simple", "user-modify-admin", "95");
+ event_link("ldap-delete", "user-delete", "55");
+-event_link("ldap-update", "user-lock", "55");
+ 
+-event_link("ldap-update", "user-modify", "95");
+-event_link("ldap-update", "user-modify-admin", "95");
+-event_link("ldap-update", "group-modify", "95");
+-event_link("ldap-update", "password-modify", "95");
++event_link("ldap-update-simple", "password-modify", "95");
++event_link("ldap-update-simple", "user-lock", "55");
+ 
+-event_link("ldap-update", "ibay-create", "95");
+-event_link("ldap-update", "ibay-modify", "95");
++event_link("ldap-update-simple", "ibay-create", "95");
++event_link("ldap-update-simple", "ibay-modify", "95");
+ event_link("ldap-delete", "ibay-delete", "55");
+ 
++event_link("ldap-update-simple", "machine-account-create", "95");
++
+ event_link("ldap-update", "bootstrap-ldap-save", "25");
+ event_link("cleanup-unix-user-group", "bootstrap-ldap-save", "98");
+ 
+-event_link("ldap-update", "machine-account-create", "95");
+-
+ event_link("ldap-dump", "pre-backup", "30");
+ 
+ event_link("ldap-update",   "ldap-update", "80");
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.simple-ldap-update e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.simple-ldap-update	2010-11-08 11:48:06.000000000 -0700
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-11-08 11:48:42.000000000 -0700
+@@ -120,7 +120,7 @@ my ($dc,undef) = split (/\./, $domain);
+ my $o = $l->prop('defaultCompany') || $domain;
+ 
+ # Try and find base record
+-my %seen;
++my $seen;
+ my @objects = qw(top organization dcObject);
+ my $result = $ldap->search( base => $base, filter => '(objectClass=*)', scope => 'base' );
+ if ($result->code == 32)
+@@ -134,8 +134,8 @@ elsif ($result->code)
+ else
+ {
+     # Don't overwrite objectClass (just update if necessary)
+-    %seen = ();
+-    @objects = grep { ! $seen{$_} ++ } (@objects, $result->entry(0)->get_value('objectClass') );
++    $seen = ();
++    @objects = grep { ! $seen->{$_} ++ } (@objects, $result->entry(0)->get_value('objectClass') );
+     $ldap->modify( $base, replace => { dc => $dc, o => $o, objectClass => \@objects } );
+ }
+ warn "failed to add/update entry $base: ", $result->error if $result->code;
+@@ -156,8 +156,8 @@ foreach my $obj ( qw(Users Groups Comput
+     else
+     {
+ 	# Don't overwrite objectClass (just update if necessary)
+-	%seen = ();
+-	@objects = grep { ! $seen{$_} ++ } (@objects, $result->entry(0)->get_value('objectClass') );
++	$seen = ();
++	@objects = grep { ! $seen->{$_} ++ } (@objects, $result->entry(0)->get_value('objectClass') );
+ 	$result = $ldap->modify( "ou=$obj,$base", replace => { ou => $obj, objectClass => \@objects } );
+     }
+     warn "failed to add/update entry ou=$obj,$base: ", $result->error if $result->code;
+@@ -175,6 +175,7 @@ foreach my $user (qw/www/){
+ 
+     # Read information from getent passwd
+     @{$updates->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($user);
++    $updates->{$dn}->{userPassword} = "!*" if $updates->{$dn}->{userPassword} eq '!!';
+     $updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
+     $updates->{$dn}->{cn} = $updates->{$dn}->{gecos};
+ 
+@@ -197,6 +198,16 @@ foreach my $user (qw/www/){
+             }
+             push @{$updates->{$dn}->{objectClass}}, 'sambaSamAccount';
+         }
++        else
++        {
++            $updates->{$dn}->{sambaLMPassword} = [];
++            $updates->{$dn}->{sambaNTPassword} = [];
++            $updates->{$dn}->{sambaSID} = [];
++            $updates->{$dn}->{displayName} = [];
++            $updates->{$dn}->{sambaPrimaryGroupSID} = [];
++            $updates->{$dn}->{sambaAcctFlags} = [];
++            $updates->{$dn}->{sambaPwdLastSet} = [];
++        }
+     }
+ }
+ endpwent();
+@@ -217,12 +228,21 @@ foreach my $group (qw/nobody shared www/
+     }
+ 
+     # Samba parameters if we find the samba.schema
+-    if ( -f "$schema" and exists $groupmap->{$group} )
+-    {   
+-        push @{$updates->{$dn}->{objectClass}}, 'sambaGroupMapping';
+-        $updates->{$dn}->{displayName} = $groupmap->{$group}->{name};
+-        $updates->{$dn}->{sambaSID} = $groupmap->{$group}->{sid};
+-        $updates->{$dn}->{sambaGroupType} = '2';
++    if ( -f "$schema" )
++    {
++        if ( exists $groupmap->{$group} )
++        {
++            push @{$updates->{$dn}->{objectClass}}, 'sambaGroupMapping';
++            $updates->{$dn}->{displayName} = $groupmap->{$group}->{name};
++            $updates->{$dn}->{sambaSID} = $groupmap->{$group}->{sid};
++            $updates->{$dn}->{sambaGroupType} = '2';
++        }
++        else
++        {
++            $updates->{$dn}->{displayName} = [];
++            $updates->{$dn}->{sambaSID} = [];
++            $updates->{$dn}->{sambaGroupType} = [];
++        }
+     }
+ }
+ endgrent();
+@@ -260,6 +280,7 @@ foreach my $acct (@accounts)
+ 	    delete $updates->{$dn};
+ 	    next;
+ 	}
++	$updates->{$dn}->{userPassword} = "!*" if $updates->{$dn}->{userPassword} eq '!!';
+ 	$updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
+ 	$desc = $updates->{$dn}->{cn} = $updates->{$dn}->{gecos};
+ 
+@@ -300,6 +321,16 @@ foreach my $acct (@accounts)
+ 		}
+ 		push @{$updates->{$dn}->{objectClass}}, 'sambaSamAccount';
+ 	    }
++	    else
++	    {
++		$updates->{$dn}->{sambaLMPassword} = [];
++		$updates->{$dn}->{sambaNTPassword} = [];
++		$updates->{$dn}->{sambaSID} = [];
++		$updates->{$dn}->{displayName} = [];
++		$updates->{$dn}->{sambaPrimaryGroupSID} = [];
++		$updates->{$dn}->{sambaAcctFlags} = [];
++		$updates->{$dn}->{sambaPwdLastSet} = [];
++	    }
+ 	}
+ 
+ 	#------------------------------------------------------------
+@@ -322,20 +353,27 @@ foreach my $acct (@accounts)
+ 	}
+ 
+ 	# Samba parameters if we find the samba.schema
+-	if ( -f "$schema" and exists $groupmap->{$key} )
++	if ( -f "$schema" )
+ 	{
+-	    push @{$updates->{$dn}->{objectClass}}, 'sambaGroupMapping';
+-	    $updates->{$dn}->{displayName} = $groupmap->{$key}->{name};
+-	    $updates->{$dn}->{sambaSID} = $groupmap->{$key}->{sid};
+-	    $updates->{$dn}->{sambaGroupType} = '2';
++	    if ( exists $groupmap->{$key} )
++	    {
++		push @{$updates->{$dn}->{objectClass}}, 'sambaGroupMapping';
++		$updates->{$dn}->{displayName} = $groupmap->{$key}->{name};
++		$updates->{$dn}->{sambaSID} = $groupmap->{$key}->{sid};
++		$updates->{$dn}->{sambaGroupType} = '2';
++	    }
++	    else
++	    {
++		$updates->{$dn}->{displayName} = [];
++		$updates->{$dn}->{sambaSID} = [];
++		$updates->{$dn}->{sambaGroupType} = [];
++	    }
+ 	}
+-
+     }
+ }
+ endpwent();
+ endgrent();
+ 
+-
+ #------------------------------------------------------------
+ # Update LDAP database entry.
+ #------------------------------------------------------------
+@@ -423,8 +461,12 @@ foreach my $dn (keys %$updates)
+     else
+     {
+ 	# Don't overwrite objectClass (just remove person if existing)
+-	%seen = ( person => 1 );
+-	@{$updates->{$dn}->{objectClass}} = grep { ! $seen{$_}++ } (@{$updates->{$dn}->{objectClass}}, @objectClass );
++	$seen = { person => 1 };
++
++	# Remove samba objectClasses if removing samba attributes
++	@{$seen}{'sambaSamAccount','sambaGroupMapping'} = (1,1) if ref($updates->{$dn}->{sambaSID}) eq 'ARRAY';
++
++	@{$updates->{$dn}->{objectClass}} = grep { ! $seen->{$_}++ } (@{$updates->{$dn}->{objectClass}}, @objectClass );
+ 
+ 	$result = $ldap->modify( $dn, replace => $updates->{$dn});
+ 	$result->code && warn "failed to modify entry $dn: ", $result->error;
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update-simple.simple-ldap-update e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update-simple
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update-simple.simple-ldap-update	2010-11-08 11:48:53.000000000 -0700
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update-simple	2010-11-08 11:48:42.000000000 -0700
+@@ -0,0 +1,245 @@
++#!/usr/bin/perl -w
++
++package esmith;
++
++use strict;
++use Errno;
++use esmith::ConfigDB;
++use esmith::AccountsDB;
++use esmith::util;
++use Net::LDAP;
++use Date::Parse;
++
++my $c = esmith::ConfigDB->open_ro;
++my $a = esmith::AccountsDB->open_ro;
++
++my $l = $c->get('ldap');
++my $status = $l->prop('status') || "disabled";
++unless ($status eq "enabled" )
++{
++    warn "Not running action script $0, LDAP service not enabled!\n";
++    exit(0);
++}
++
++exit(0) if ($c->get('ldap')->prop('Authentication') || 'disabled') eq 'enabled';
++
++my $domain = $c->get('DomainName')
++    || die("Couldn't determine domain name");
++$domain = $domain->value;
++
++my $schema = '/etc/openldap/schema/samba.schema';
++
++my $event = shift || die "Event name must be specified";
++
++my @name = @ARGV;
++die "Account name argument missing." unless scalar (@name) >= 1;
++
++#------------------------------------------------------------
++# Update LDAP database entry.
++#------------------------------------------------------------
++my $base = esmith::util::ldapBase ($domain);
++my $pw = esmith::util::LdapPassword();
++
++my $ldap = Net::LDAP->new('localhost')
++    or die "$@";
++
++$ldap->bind(
++    dn => "cn=root,$base",
++    password => $pw
++);
++
++my @accounts;
++my $account;
++foreach my $name (@name)
++{   
++    $account = $a->get($name);
++    die "Account $name not found.\n" unless defined $account;
++    my $type = $account->prop('type') || "unknown";
++
++    die "Account $name is not a user, group, ibay, machine account; update LDAP entry failed.\n"
++        unless ($type =~ m{^(?:user|group|ibay|machine)$} or $name eq 'admin');
++
++    push @accounts, $account;
++}
++
++#------------------------------------------------------------
++# Read all samba groups (can't do individual lookups)
++#------------------------------------------------------------
++
++my $groupmap = ();
++
++# Only do if schema is found
++if ( -f "$schema" and -x '/usr/bin/net' )
++{
++    foreach (`/usr/bin/net groupmap list 2> /dev/null`){
++        chomp;
++        next if m{\(S-1-5-32-\d+\)};
++        $groupmap->{$3} = { name => "$1", sid => "$2" } if (/^(.*) \((S-.*-\d+)\) -> (.*)$/);
++    }
++}
++
++#------------------------------------------------------------
++# Create a list of updates that need to happen
++#------------------------------------------------------------
++
++my $updates;
++foreach my $acct (@accounts)
++{
++    my $key = $acct->key;
++    my $type = $acct->prop('type');
++    my $desc = undef;
++    my $dn;
++
++    if ($type =~ m{^(?:user|group|ibay|machine)$} or $key eq 'admin')
++    {
++        #------------------------------------------------------------
++        # Do the user portion
++        #------------------------------------------------------------
++        if ($type eq 'machine')
++        {
++            $dn = "uid=$key,ou=Computers,$base";
++        }
++        else
++        {
++            $dn = "uid=$key,ou=Users,$base";
++        }
++        utf8::upgrade($dn);
++
++        # Read information from getent passwd
++        @{$updates->{$dn}}{'uid','userPassword'} = getpwnam($key);
++        unless ($updates->{$dn}->{uid})
++        {
++            delete $updates->{$dn};
++            next;
++        }
++        $updates->{$dn}->{userPassword} = "!*" if $updates->{$dn}->{userPassword} eq '!!';
++        $updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
++
++        # Samba parameters if we find the samba.schema
++        if ( -f "$schema" and -x '/usr/bin/pdbedit' )
++        {
++            my $line = `/usr/bin/pdbedit -wu '$key' 2> /dev/null`;
++            chomp($line);
++            if ($line)
++            {
++                @{$updates->{$dn}}{'junk','junk','sambaLMPassword','sambaNTPassword'} = split(/:/,$line);
++                foreach $line (`/usr/bin/pdbedit -vu '$key' 2> /dev/null`)
++                {
++                    chomp($line);
++                    $updates->{$dn}->{sambaSID} = $1 if $line =~ m{User SID:\s+(S-.*)$};
++                    $updates->{$dn}->{displayName} = $1 if $line =~ m{Full Name:\s+(.*)$};
++                    $updates->{$dn}->{sambaPrimaryGroupSID} = $1 if $line =~ m{Primary Group SID:\s+(S-.*)$};
++                    $updates->{$dn}->{sambaAcctFlags} = $1 if $line =~ m{Account Flags:\s+(.*)$};
++                    $updates->{$dn}->{sambaPwdLastSet} = str2time($1) if $line =~ m{Password last set:\s+(.*)$};
++                }
++                push @{$updates->{$dn}->{objectClass}}, 'sambaSamAccount';
++            }
++            else
++            {
++                $updates->{$dn}->{sambaLMPassword} = [];
++                $updates->{$dn}->{sambaNTPassword} = [];
++                $updates->{$dn}->{sambaSID} = [];
++                $updates->{$dn}->{displayName} = [];
++                $updates->{$dn}->{sambaPrimaryGroupSID} = [];
++                $updates->{$dn}->{sambaAcctFlags} = [];
++                $updates->{$dn}->{sambaPwdLastSet} = [];
++            }
++        }
++    }
++}
++endpwent();
++
++#------------------------------------------------------------
++# Do the group portion (only if we have samba)
++#------------------------------------------------------------
++if ( -f "$schema" )
++{
++    foreach my $group ( (map { $_->key } $a->users), (map { $_->key } $a->groups), qw/admin nobody shared/ ){
++        my $dn = "cn=$group,ou=Groups,$base";
++        utf8::upgrade($dn);
++
++        if ( exists $groupmap->{$group} )
++        {
++            push @{$updates->{$dn}->{objectClass}}, 'sambaGroupMapping';
++            $updates->{$dn}->{displayName} = $groupmap->{$group}->{name};
++            $updates->{$dn}->{sambaSID} = $groupmap->{$group}->{sid};
++            $updates->{$dn}->{sambaGroupType} = '2';
++        }
++        else
++        {
++            $updates->{$dn}->{displayName} = [];
++            $updates->{$dn}->{sambaSID} = [];
++            $updates->{$dn}->{sambaGroupType} = [];
++        }
++    }
++}
++
++#------------------------------------------------------------
++# Update LDAP database entry.
++#------------------------------------------------------------
++foreach my $dn (keys %$updates)
++{
++    # Try and find record
++    my $result = $ldap->search( base => $dn, filter => '(objectClass=*)', scope => 'base' );
++    warn "failed looking up entry $dn: ", $result->error if $result->code && $result->code != 32;
++    my $code = $result->code;
++    my @objectClass = $code == 32 ? () : $result->entry(0)->get_value('objectClass');
++
++    # Clean up attributes and convert to utf8
++    delete $updates->{$dn}->{'junk'};
++    foreach my $attr ( keys %{$updates->{$dn}} )
++    {
++        if ( ref($updates->{$dn}->{$attr}) eq 'ARRAY' )
++        {
++            if ( $code == 32 and scalar(@{$updates->{$dn}->{$attr}}) == 0 )
++            {
++                delete $updates->{$dn}->{$attr};
++            }
++            else
++            {
++                for (my $c = 0; $c < scalar(@{$updates->{$dn}->{$attr}}); $c++)
++                {
++                    utf8::upgrade($updates->{$dn}->{$attr}[$c]);
++                }
++            }
++        }
++        else
++        {
++            if ($updates->{$dn}->{$attr} !~ /^\s*$/)
++            {
++                utf8::upgrade($updates->{$dn}->{$attr});
++            }
++            elsif ( $code == 32 )
++            {
++                delete $updates->{$dn}->{$attr};
++            }
++            else
++            {
++                $updates->{$dn}->{$attr} = [];
++            }
++        }
++    }
++
++    # Perform insert or update
++    if ( $code == 32 )
++    {
++        $result = $ldap->add( $dn, attrs => [ %{$updates->{$dn}} ] );
++        $result->code && warn "failed to add entry $dn: ", $result->error;
++    }
++    else
++    {
++        # Don't overwrite objectClass (just update if necessary)
++        my $seen = ();
++
++        # Remove samba objectClasses if removing samba attributes
++        @{$seen}{'sambaSamAccount','sambaGroupMapping'} = (1,1) if ref($updates->{$dn}->{sambaSID}) eq 'ARRAY';
++
++        @{$updates->{$dn}->{objectClass}} = grep { ! $seen->{$_}++ } (@{$updates->{$dn}->{objectClass}}, @objectClass );
++
++        $result = $ldap->modify( $dn, replace => $updates->{$dn});
++        $result->code && warn "failed to modify entry $dn: ", $result->error;
++    }
++}
++$ldap->unbind;
++
++exit (0);

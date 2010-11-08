@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.74 2010/11/05 19:02:54 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.75 2010/11/08 18:58:26 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 62
+%define release 63
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -67,6 +67,7 @@ Patch53: e-smith-ldap-5.2.0-enable_ldap_init.patch
 Patch54: e-smith-ldap-5.2.0-ldap-auth.patch
 Patch55: e-smith-ldap-5.2.0-unix-cleanup.patch
 Patch56: e-smith-ldap-5.2.0-group-attrs.patch
+Patch57: e-smith-ldap-5.2.0-simple-ldap-update.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -82,6 +83,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Mon Nov 8 2010 Shad L. Lords <slords@mail.com> 5.2.0-63.sme
+- Simplify ldap-update for most events [SME: 6354]
+
 * Fri Nov 5 2010 Shad L. Lords <slords@mail.com> 5.2.0-62.sme
 - Adjust call to ldap-update later create/modify/delete [SME: 6284]
 
@@ -981,6 +985,7 @@ e-smith server and gateway software - LDAP module.
 %patch54 -p1
 %patch55 -p1
 %patch56 -p1
+%patch57 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
