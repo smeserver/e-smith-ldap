@@ -1,0 +1,20 @@
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.fixe_ldif_templates	2010-11-10 19:00:38.000000000 +0100
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-11-10 19:01:58.000000000 +0100
+@@ -84,14 +84,14 @@
+     # www is a special user for all accounts
+     foreach my $user (qw/www/)
+     {   
+-        $dn = "uid=$key,ou=Users,$ldapBase";
++        $dn = "uid=$user,ou=Users,$ldapBase";
+         utf8::upgrade($dn);
+ 
+         $dnmap->{$user}->{user} = $dn;
+ 
+         $ldif->{$dn}->{objectClass} = [ qw(account posixAccount shadowAccount) ];
+-        @{$ldif->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($key);
+-        $ldif->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $ldif->{$dn}->{userPassword} =~ m/^{/;
++        @{$ldif->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($user);
++        $ldif->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $ldif->{$dn}->{userPassword} =~ m/^\{/;
+         $ldif->{$dn}->{cn} = $ldif->{$dn}->{gecos} || '';
+     }
+     endpwent();
