@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.76 2010/11/10 18:08:28 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.77 2010/11/12 03:04:10 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 64
+%define release 65
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -69,6 +69,7 @@ Patch55: e-smith-ldap-5.2.0-unix-cleanup.patch
 Patch56: e-smith-ldap-5.2.0-group-attrs.patch
 Patch57: e-smith-ldap-5.2.0-simple-ldap-update.patch
 Patch58: e-smith-ldap-5.2.0-fixe_ldif_templates.patch
+Patch59: e-smith-ldap-5.2.0-locked-passwd.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -84,8 +85,11 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Thu Nov 11 2010 Shad L. Lords <slord@mail.com> 5.2.0-65.sme
+- Store locked password instead of expired password [SME: 6360]
+
 * Wed Nov 10 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-64.sme
-- Fixe ldif templates error [SME: 6356]
+- Fixed ldif templates error [SME: 6356]
 
 * Mon Nov 8 2010 Shad L. Lords <slords@mail.com> 5.2.0-63.sme
 - Simplify ldap-update for most events [SME: 6354]
@@ -991,6 +995,7 @@ e-smith server and gateway software - LDAP module.
 %patch56 -p1
 %patch57 -p1
 %patch58 -p1
+%patch59 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

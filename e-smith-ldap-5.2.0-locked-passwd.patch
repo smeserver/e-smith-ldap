@@ -1,0 +1,19 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.locked-passwd e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.locked-passwd	2010-11-11 19:56:57.000000000 -0700
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-11-11 19:58:55.000000000 -0700
+@@ -54,6 +54,7 @@
+ 
+         $ldif->{$dn}->{objectClass} = [ qw(posixAccount shadowAccount) ];
+         $ldif->{$dn}->{uid} = $key;
++        $pwd = "!*" if $pwd eq '!!';
+         $ldif->{$dn}->{userPassword} = ($pwd =~ m/^\{/) ? $pwd : "\{CRYPT\}$pwd";
+         $ldif->{$dn}->{uidNumber} = $uid;
+         $ldif->{$dn}->{gidNumber} = $gid;
+@@ -91,6 +92,7 @@
+ 
+         $ldif->{$dn}->{objectClass} = [ qw(account posixAccount shadowAccount) ];
+         @{$ldif->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($user);
++        $ldif->{$dn}->{userPassword} = "!*" if $ldif->{$dn}->{userPassword} eq '!!';
+         $ldif->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $ldif->{$dn}->{userPassword} =~ m/^\{/;
+         $ldif->{$dn}->{cn} = $ldif->{$dn}->{gecos} || '';
+     }
