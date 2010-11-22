@@ -1,0 +1,12 @@
+diff -up e-smith-ldap-5.2.0/createlinks.startup-order e-smith-ldap-5.2.0/createlinks
+--- e-smith-ldap-5.2.0/createlinks.startup-order	2010-11-22 08:39:25.000000000 -0700
++++ e-smith-ldap-5.2.0/createlinks	2010-11-22 08:39:01.000000000 -0700
+@@ -49,6 +49,7 @@ event_link("ldap-delete-dumps", "pre-res
+ event_link("set-ldap-bootstrap", "bootstrap-console-save", "95");
+ event_link("reset-ldap-bootstrap", "bootstrap-ldap-save", "95");
+ 
+-service_link_enhanced("ldap.init", "S78", "7");
++service_link_enhanced("ldap", "S48", "7");
++service_link_enhanced("ldap.init", "S49", "7");
+ 
+ exit 0;

@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.77 2010/11/12 03:04:10 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.78 2010/11/22 15:47:11 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 65
+%define release 66
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -70,6 +70,7 @@ Patch56: e-smith-ldap-5.2.0-group-attrs.patch
 Patch57: e-smith-ldap-5.2.0-simple-ldap-update.patch
 Patch58: e-smith-ldap-5.2.0-fixe_ldif_templates.patch
 Patch59: e-smith-ldap-5.2.0-locked-passwd.patch
+Patch60: e-smith-ldap-5.2.0-startup-order.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -85,6 +86,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Mon Nov 22 2010 Shad L. Lords <slord@mail.com> 5.2.0-66.sme
+- Change startup order for ldap [SME: 6390]
+
 * Thu Nov 11 2010 Shad L. Lords <slord@mail.com> 5.2.0-65.sme
 - Store locked password instead of expired password [SME: 6360]
 
@@ -996,12 +1000,11 @@ e-smith server and gateway software - LDAP module.
 %patch57 -p1
 %patch58 -p1
 %patch59 -p1
+%patch60 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
 perl createlinks
-mkdir -p root/etc/rc.d/rc7.d
-ln -s /etc/rc.d/init.d/e-smith-service root/etc/rc.d/rc7.d/S77ldap
 mkdir -p root/home/e-smith/db/ldap
 
 mkdir -p root/etc/rc.d/init.d/supervise
