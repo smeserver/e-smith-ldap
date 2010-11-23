@@ -1,0 +1,10 @@
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/20ldif.remove_bogus_junk	2010-11-23 19:46:12.000000000 +0100
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/20ldif	2010-11-23 19:46:52.000000000 +0100
+@@ -1,6 +1,7 @@
+ {
+     foreach my $dn (keys %$ldif)
+     {   
++        delete $ldif->{$dn}->{'junk'};
+         $OUT .= "dn: $dn\n";
+         foreach my $attr ( keys %{$ldif->{$dn}} )
+         {

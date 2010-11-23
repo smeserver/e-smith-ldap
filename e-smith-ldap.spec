@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.78 2010/11/22 15:47:11 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.79 2010/11/23 18:49:16 vip-ire Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 66
+%define release 67
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -71,6 +71,7 @@ Patch57: e-smith-ldap-5.2.0-simple-ldap-update.patch
 Patch58: e-smith-ldap-5.2.0-fixe_ldif_templates.patch
 Patch59: e-smith-ldap-5.2.0-locked-passwd.patch
 Patch60: e-smith-ldap-5.2.0-startup-order.patch
+Patch61: e-smith-ldap-5.2.0-remove_bogus_junk.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -86,6 +87,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Tue Nov 23 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-67.sme
+- Remove bogus junk attribute from ldif templates [SME: 6396]
+
 * Mon Nov 22 2010 Shad L. Lords <slord@mail.com> 5.2.0-66.sme
 - Change startup order for ldap [SME: 6390]
 
@@ -1001,6 +1005,7 @@ e-smith server and gateway software - LDAP module.
 %patch58 -p1
 %patch59 -p1
 %patch60 -p1
+%patch61 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
