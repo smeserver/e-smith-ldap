@@ -1,0 +1,24 @@
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.fix-department e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update.fix-department	2010-11-30 11:07:32.000000000 -0700
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-11-30 11:09:09.000000000 -0700
+@@ -56,7 +56,7 @@ my $map = { 'FirstName' => 'givenName',
+ 	    'LastName' => 'sn',
+ 	    'Phone' => 'telephoneNumber',
+ 	    'Company' => 'o',
+-	    'Department' => 'ou',
++	    'Dept' => 'ou',
+ 	    'City' => 'l',
+ 	    'Street' => 'street',
+ 	  };
+diff -up e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.fix-department e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+--- e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin.fix-department	2010-11-30 11:07:32.000000000 -0700
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-11-30 11:09:12.000000000 -0700
+@@ -71,7 +71,7 @@
+             $ldif->{$dn}->{sn} = $account->prop('LastName') || '';
+             $ldif->{$dn}->{telephoneNumber} = $account->prop('Phone') || '';
+             $ldif->{$dn}->{o} = $account->prop('Company') || '';
+-            $ldif->{$dn}->{ou} = $account->prop('Department') || '';
++            $ldif->{$dn}->{ou} = $account->prop('Dept') || '';
+             $ldif->{$dn}->{l} = $account->prop('City') || '';
+             $ldif->{$dn}->{street} = $account->prop('Street') || '';
+         }

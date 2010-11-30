@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.81 2010/11/30 18:06:09 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.82 2010/11/30 18:10:29 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 69
+%define release 70
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -73,6 +73,7 @@ Patch59: e-smith-ldap-5.2.0-locked-passwd.patch
 Patch60: e-smith-ldap-5.2.0-startup-order.patch
 Patch61: e-smith-ldap-5.2.0-remove_bogus_junk.patch
 Patch62: e-smith-ldap-5.2.0-ldapmodify.patch
+Patch63: e-smith-ldap-5.2.0-fix-department.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -88,6 +89,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Tue Nov 30 2010 Shad L. Lords <slord@mail.com> 5.2.0-70.sme
+- Use correct field (Dept) for ou ldap field [SME: 6417]
+
 * Tue Nov 30 2010 Shad L. Lords <slord@mail.com> 5.2.0-69.sme
 - Add rfc2739.schem back in and include in config so upgrades work [SME: 5159]
 
@@ -1014,6 +1018,7 @@ e-smith server and gateway software - LDAP module.
 %patch60 -p1
 %patch61 -p1
 %patch62 -p1
+%patch63 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
