@@ -1,0 +1,16 @@
+diff -Nur -x '*.orig' -x '*.rej' e-smith-ldap-5.2.0/root/etc/rc.d/init.d/ldap.init mezzanine_patched_e-smith-ldap-5.2.0/root/etc/rc.d/init.d/ldap.init
+--- e-smith-ldap-5.2.0/root/etc/rc.d/init.d/ldap.init	2010-11-29 23:21:23.000000000 +0100
++++ mezzanine_patched_e-smith-ldap-5.2.0/root/etc/rc.d/init.d/ldap.init	2010-11-29 23:21:20.000000000 +0100
+@@ -60,8 +60,10 @@
+ 
+                     open (STDERR, "|/usr/bin/logger -p local1.info -t ldap.init");
+                     open (STDOUT, ">&STDERR");
+-                    exec "/usr/bin/ldapadd", "-c", "-x", "-H", "ldap://localhost/",
+-                         "-D", "cn=root,$base", "-w", "$pw";' < $link && /bin/rm $link
++                    my $link = shift || die "Missing filename";
++                    my @add = system("/bin/grep -q changetype $link") == 0 ? () : ("-a");
++                    exec "/usr/bin/ldapmodify", @add, "-c", "-x", "-H", "ldap://localhost/",
++                         "-D", "cn=root,$base", "-w", "$pw", "-f", "$link";' $link && /bin/rm $link
+                 ;;
+                 *)
+                 action "Loading $F into ldap" perl -e '
