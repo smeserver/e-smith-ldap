@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.80 2010/11/30 10:43:14 vip-ire Exp $
+# $Id: e-smith-ldap.spec,v 1.81 2010/11/30 18:06:09 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 68
+%define release 69
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -88,6 +88,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Tue Nov 30 2010 Shad L. Lords <slord@mail.com> 5.2.0-69.sme
+- Add rfc2739.schem back in and include in config so upgrades work [SME: 5159]
+
 * Tue Nov 30 2010 Daniel Berteaud <daniel@firewall-services.com> 5.2.0-68.sme
 - Use ldapmodify to load ldif, add -a if no changetype [SME: 6413]
 
