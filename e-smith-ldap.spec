@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.83 2010/12/01 03:43:48 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.84 2010/12/01 19:24:58 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 71
+%define release 72
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -75,6 +75,7 @@ Patch61: e-smith-ldap-5.2.0-remove_bogus_junk.patch
 Patch62: e-smith-ldap-5.2.0-ldapmodify.patch
 Patch63: e-smith-ldap-5.2.0-fix-department.patch
 Patch64: e-smith-ldap-5.2.0-update-ldap-later.patch
+Patch65: e-smith-ldap-5.2.0-ldap-init.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -90,6 +91,11 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Dec 1 2010 Shad L. Lords <slord@mail.com> 5.2.0-72.sme
+- Replace convert_ldif with ldif-fix script [SME: 6244]
+- Remove ldif template and expansion [SME: 6421]
+- Simplify ldap-update call by calling ldif-fix [SME: 6422]
+
 * Tue Nov 30 2010 Shad L. Lords <slord@mail.com> 5.2.0-71.sme
 - Update ldap database later to pick up samba group maps [SME: 6419]
 
@@ -1024,6 +1030,7 @@ e-smith server and gateway software - LDAP module.
 %patch62 -p1
 %patch63 -p1
 %patch64 -p1
+%patch65 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests

@@ -1,0 +1,1258 @@
+diff -ruN e-smith-ldap-5.2.0.ldap-init/root/etc/e-smith/events/actions/ldap-update e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update
+--- e-smith-ldap-5.2.0.ldap-init/root/etc/e-smith/events/actions/ldap-update	2010-12-01 11:12:30.000000000 -0700
++++ e-smith-ldap-5.2.0/root/etc/e-smith/events/actions/ldap-update	2010-12-01 12:08:29.000000000 -0700
+@@ -1,4 +1,4 @@
+-#!/usr/bin/perl -w
++#!/bin/bash
+ 
+ #----------------------------------------------------------------------
+ # copyright (C) 1999, 2000 e-smith, inc.
+@@ -22,456 +22,4 @@
+ # call us on 1 888 ESMITH 1 (US/Canada toll free) or +1 613 564 8000
+ #----------------------------------------------------------------------
+ 
+-package esmith;
+-
+-use strict;
+-use Errno;
+-use esmith::ConfigDB;
+-use esmith::AccountsDB;
+-use esmith::util;
+-use Net::LDAP;
+-use Date::Parse;
+-
+-my $c = esmith::ConfigDB->open_ro;
+-my $a = esmith::AccountsDB->open_ro;
+-
+-my $l = $c->get('ldap');
+-my $status = $l->prop('status') || "disabled";
+-unless ($status eq "enabled" )
+-{
+-    warn "Not running action script $0, LDAP service not enabled!\n";
+-    exit(0);
+-}
+-
+-my $hostname = $c->get('SystemName')
+-    || die("Couldn't determine system name");
+-$hostname = $hostname->value;
+-
+-my $domain = $c->get('DomainName')
+-    || die("Couldn't determine domain name");
+-$domain = $domain->value;
+-
+-my $schema = '/etc/openldap/schema/samba.schema';
+-my $map = { 'FirstName' => 'givenName',
+-	    'LastName' => 'sn',
+-	    'Phone' => 'telephoneNumber',
+-	    'Company' => 'o',
+-	    'Dept' => 'ou',
+-	    'City' => 'l',
+-	    'Street' => 'street',
+-	  };
+-
+-my @accounts;
+-my $account;
+-my $event = shift || die "Event name must be specified";
+-if ($event eq 'ldap-update' or $event eq 'bootstrap-ldap-save')
+-{
+-    @accounts = ($a->users, $a->groups, $a->ibays, $a->get_all_by_prop(type => 'machine'));
+-    push(@accounts, $a->get('admin'));
+-}
+-else
+-{   
+-    my @name = @ARGV;
+-    die "Account name argument missing." unless scalar (@name) >= 1;
+-
+-    foreach my $name (@name)
+-    {   
+-        $account = $a->get($name);
+-        die "Account $name not found.\n" unless defined $account;
+-        my $type = $account->prop('type') || "unknown";
+-
+-        die "Account $name is not a user, group, ibay, machine account; update LDAP entry failed.\n"
+-            unless ($type =~ m{^(?:user|group|ibay|machine)$} or $name eq 'admin');
+-        push @accounts, $account;
+-    }
+-}
+-
+-#------------------------------------------------------------
+-# Read all samba groups (can't do individual lookups)
+-#------------------------------------------------------------
+-
+-my $groupmap = ();
+-
+-# Only do if schema is found
+-if ( -f "$schema" and -x '/usr/bin/net' )
+-{
+-    foreach (`/usr/bin/net groupmap list 2> /dev/null`){
+-	chomp;
+-	next if m{\(S-1-5-32-\d+\)};
+-	$groupmap->{$3} = { name => "$1", sid => "$2" } if (/^(.*) \((S-.*-\d+)\) -> (.*)$/);
+-    }
+-}
+-
+-#------------------------------------------------------------
+-# Update LDAP database entry.
+-#------------------------------------------------------------
+-my $base = esmith::util::ldapBase ($domain);
+-my $pw = esmith::util::LdapPassword();
+-
+-my $ldap = Net::LDAP->new('localhost')
+-    or die "$@";
+-
+-$ldap->bind(
+-    dn => "cn=root,$base",
+-    password => $pw
+-);
+-
+-my ($dc,undef) = split (/\./, $domain);
+-my $o = $l->prop('defaultCompany') || $domain;
+-
+-# Try and find base record
+-my $seen;
+-my @objects = qw(top organization dcObject);
+-my $result = $ldap->search( base => $base, filter => '(objectClass=*)', scope => 'base' );
+-if ($result->code == 32)
+-{
+-    $result = $ldap->add( $base, attr => [ dc => $dc, o => $o, objectClass => \@objects ] );
+-}
+-elsif ($result->code)
+-{
+-    warn "failed checking base entry $base: ", $result->error;
+-}
+-else
+-{
+-    # Don't overwrite objectClass (just update if necessary)
+-    $seen = ();
+-    @objects = grep { ! $seen->{$_} ++ } (@objects, $result->entry(0)->get_value('objectClass') );
+-    $ldap->modify( $base, replace => { dc => $dc, o => $o, objectClass => \@objects } );
+-}
+-warn "failed to add/update entry $base: ", $result->error if $result->code;
+-
+-# Try and find container records
+-foreach my $obj ( qw(Users Groups Computers) )
+-{
+-    @objects = qw(top organizationalUnit);
+-    $result = $ldap->search( base => "ou=$obj,$base", filter => '(objectClass=*)', scope => 'base' );
+-    if ($result->code == 32)
+-    {
+-	$result = $ldap->add( "ou=$obj,$base", attr => [ ou => $obj, objectClass => \@objects ] );
+-    }
+-    elsif ($result->code)
+-    {
+-	warn "failed checking base entry ou=$obj,$base: ", $result->error;
+-    }
+-    else
+-    {
+-	# Don't overwrite objectClass (just update if necessary)
+-	$seen = ();
+-	@objects = grep { ! $seen->{$_} ++ } (@objects, $result->entry(0)->get_value('objectClass') );
+-	$result = $ldap->modify( "ou=$obj,$base", replace => { ou => $obj, objectClass => \@objects } );
+-    }
+-    warn "failed to add/update entry ou=$obj,$base: ", $result->error if $result->code;
+-}
+-
+-my $updates;
+-
+-#------------------------------------------------------------
+-# Ensure nobody, shared, www objects are there
+-#------------------------------------------------------------
+-foreach my $user (qw/www/){
+-    my $dn = "uid=$user,ou=Users,$base";
+-    utf8::upgrade($dn);
+-    $updates->{$dn}->{objectClass} = ['account', 'posixAccount', 'shadowAccount'];
+-
+-    # Read information from getent passwd
+-    @{$updates->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($user);
+-    $updates->{$dn}->{userPassword} = "!*" if $updates->{$dn}->{userPassword} eq '!!';
+-    $updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
+-    $updates->{$dn}->{cn} = $updates->{$dn}->{gecos};
+-
+-    # Samba parameters if we find the samba.schema
+-    if ( -f "$schema" and -x '/usr/bin/pdbedit' )
+-    {
+-        my $line = `/usr/bin/pdbedit -wu '$user' 2> /dev/null`;
+-        chomp($line);
+-        if ($line)
+-        {
+-            @{$updates->{$dn}}{'junk','junk','sambaLMPassword','sambaNTPassword'} = split(/:/,$line);
+-            foreach $line (`/usr/bin/pdbedit -vu '$user' 2> /dev/null`)
+-            {
+-                chomp($line);
+-                $updates->{$dn}->{sambaSID} = $1 if $line =~ m{User SID:\s+(S-.*)$};
+-                $updates->{$dn}->{displayName} = $1 if $line =~ m{Full Name:\s+(.*)$};
+-                $updates->{$dn}->{sambaPrimaryGroupSID} = $1 if $line =~ m{Primary Group SID:\s+(S-.*)$};
+-                $updates->{$dn}->{sambaAcctFlags} = $1 if $line =~ m{Account Flags:\s+(.*)$};
+-                $updates->{$dn}->{sambaPwdLastSet} = str2time($1) if $line =~ m{Password last set:\s+(.*)$};
+-            }
+-            push @{$updates->{$dn}->{objectClass}}, 'sambaSamAccount';
+-        }
+-        else
+-        {
+-            $updates->{$dn}->{sambaLMPassword} = [];
+-            $updates->{$dn}->{sambaNTPassword} = [];
+-            $updates->{$dn}->{sambaSID} = [];
+-            $updates->{$dn}->{displayName} = [];
+-            $updates->{$dn}->{sambaPrimaryGroupSID} = [];
+-            $updates->{$dn}->{sambaAcctFlags} = [];
+-            $updates->{$dn}->{sambaPwdLastSet} = [];
+-        }
+-    }
+-}
+-endpwent();
+-
+-foreach my $group (qw/nobody shared www/){
+-    my $dn = "cn=$group,ou=Groups,$base";
+-    utf8::upgrade($dn);
+-    $updates->{$dn}->{objectClass} = ['posixGroup'];
+-
+-    # Read information from getent group
+-    @{$updates->{$dn}}{'cn','junk','gidNumber','memberUid'} = getgrnam($group);
+-    $updates->{$dn}->{memberUid} = [ split /\s+/, $updates->{$dn}->{memberUid} ];
+-
+-    # Ensure groups have the needed properties
+-    if ($group eq 'shared'){
+-        push @{$updates->{$dn}->{objectClass}}, 'mailboxRelatedObject';
+-        $updates->{$dn}->{mail} = "everyone\@$domain";
+-    }
+-
+-    # Samba parameters if we find the samba.schema
+-    if ( -f "$schema" )
+-    {
+-        if ( exists $groupmap->{$group} )
+-        {
+-            push @{$updates->{$dn}->{objectClass}}, 'sambaGroupMapping';
+-            $updates->{$dn}->{displayName} = $groupmap->{$group}->{name};
+-            $updates->{$dn}->{sambaSID} = $groupmap->{$group}->{sid};
+-            $updates->{$dn}->{sambaGroupType} = '2';
+-        }
+-        else
+-        {
+-            $updates->{$dn}->{displayName} = [];
+-            $updates->{$dn}->{sambaSID} = [];
+-            $updates->{$dn}->{sambaGroupType} = [];
+-        }
+-    }
+-}
+-endgrent();
+-
+-#------------------------------------------------------------
+-# Create a list of updates that need to happen
+-#------------------------------------------------------------
+-foreach my $acct (@accounts)
+-{
+-    my $key = $acct->key;
+-    my $type = $acct->prop('type');
+-    my $desc = undef;
+-    my $dn;
+-
+-    if ($type =~ m{^(?:user|group|ibay|machine)$} or $key eq 'admin')
+-    {
+-	#------------------------------------------------------------
+-	# Do the user portion
+-	#------------------------------------------------------------
+-	if ($type eq 'machine')
+-	{
+-	    $dn = "uid=$key,ou=Computers,$base";
+-	}
+-	else
+-	{
+-	    $dn = "uid=$key,ou=Users,$base";
+-	}
+-	utf8::upgrade($dn);
+-	$updates->{$dn}->{objectClass} = ['posixAccount', 'shadowAccount'];
+-
+-	# Read information from getent passwd
+-	@{$updates->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($key);
+-	unless ($updates->{$dn}->{uid})
+-	{
+-	    delete $updates->{$dn};
+-	    next;
+-	}
+-	$updates->{$dn}->{userPassword} = "!*" if $updates->{$dn}->{userPassword} eq '!!';
+-	$updates->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $updates->{$dn}->{userPassword} =~ m/^{/;
+-	$desc = $updates->{$dn}->{cn} = $updates->{$dn}->{gecos};
+-
+-	# Load values from db record
+-	foreach my $attr ( keys %$map )
+-	{
+-	    my $val = $acct->prop($attr);
+-	    $updates->{$dn}->{$map->{$attr}} = $val if defined $val;
+-	}
+-
+-	# Ensure users have the needed properties
+-	if ($type eq 'user' or $key eq 'admin')
+-	{
+-	    push @{$updates->{$dn}->{objectClass}}, 'inetOrgPerson';
+-	    $updates->{$dn}->{mail} = "$key\@$domain";
+-	}
+-	else
+-	{
+-	    push @{$updates->{$dn}->{objectClass}}, 'account';
+-	}
+-
+-	# Samba parameters if we find the samba.schema
+-	if ( -f "$schema" and -x '/usr/bin/pdbedit' )
+-	{
+-	    my $line = `/usr/bin/pdbedit -wu '$key' 2> /dev/null`;
+-	    chomp($line);
+-	    if ($line)
+-	    {
+-		@{$updates->{$dn}}{'junk','junk','sambaLMPassword','sambaNTPassword'} = split(/:/,$line);
+-		foreach $line (`/usr/bin/pdbedit -vu '$key' 2> /dev/null`)
+-		{
+-		    chomp($line);
+-		    $updates->{$dn}->{sambaSID} = $1 if $line =~ m{User SID:\s+(S-.*)$};
+-		    $updates->{$dn}->{displayName} = $1 if $line =~ m{Full Name:\s+(.*)$};
+-		    $updates->{$dn}->{sambaPrimaryGroupSID} = $1 if $line =~ m{Primary Group SID:\s+(S-.*)$};
+-		    $updates->{$dn}->{sambaAcctFlags} = $1 if $line =~ m{Account Flags:\s+(.*)$};
+-		    $updates->{$dn}->{sambaPwdLastSet} = str2time($1) if $line =~ m{Password last set:\s+(.*)$};
+-		}
+-		push @{$updates->{$dn}->{objectClass}}, 'sambaSamAccount';
+-	    }
+-	    else
+-	    {
+-		$updates->{$dn}->{sambaLMPassword} = [];
+-		$updates->{$dn}->{sambaNTPassword} = [];
+-		$updates->{$dn}->{sambaSID} = [];
+-		$updates->{$dn}->{displayName} = [];
+-		$updates->{$dn}->{sambaPrimaryGroupSID} = [];
+-		$updates->{$dn}->{sambaAcctFlags} = [];
+-		$updates->{$dn}->{sambaPwdLastSet} = [];
+-	    }
+-	}
+-
+-	#------------------------------------------------------------
+-	# Do the group portion
+-	#------------------------------------------------------------
+-	$dn = "cn=$key,ou=Groups,$base";
+-	utf8::upgrade($dn);
+-	$updates->{$dn}->{objectClass} = ['posixGroup'];
+-
+-	# Read information from getent group
+-	@{$updates->{$dn}}{'cn','junk','gidNumber','memberUid'} = getgrnam($key);
+-	$updates->{$dn}->{memberUid} = [ split /\s+/, $updates->{$dn}->{memberUid} ];
+-
+-	# Ensure groups have the needed properties
+-	if ($type eq 'group')
+-	{
+-	    push @{$updates->{$dn}->{objectClass}}, 'mailboxRelatedObject';
+-	    $updates->{$dn}->{mail} = "$key\@$domain";
+-	    $updates->{$dn}->{description} = $desc if $desc;
+-	}
+-
+-	# Samba parameters if we find the samba.schema
+-	if ( -f "$schema" )
+-	{
+-	    if ( exists $groupmap->{$key} )
+-	    {
+-		push @{$updates->{$dn}->{objectClass}}, 'sambaGroupMapping';
+-		$updates->{$dn}->{displayName} = $groupmap->{$key}->{name};
+-		$updates->{$dn}->{sambaSID} = $groupmap->{$key}->{sid};
+-		$updates->{$dn}->{sambaGroupType} = '2';
+-	    }
+-	    else
+-	    {
+-		$updates->{$dn}->{displayName} = [];
+-		$updates->{$dn}->{sambaSID} = [];
+-		$updates->{$dn}->{sambaGroupType} = [];
+-	    }
+-	}
+-    }
+-}
+-endpwent();
+-endgrent();
+-
+-#------------------------------------------------------------
+-# Update LDAP database entry.
+-#------------------------------------------------------------
+-foreach my $dn (keys %$updates)
+-{
+-    # Try and find record
+-    $result = $ldap->search( base => $dn, filter => '(objectClass=*)', scope => 'base' );
+-    warn "failed looking up entry $dn: ", $result->error if $result->code && $result->code != 32;
+-    my $code = $result->code;
+-    my @objectClass = $code == 32 ? () : $result->entry(0)->get_value('objectClass');
+-
+-    # Clean up attributes and convert to utf8
+-    delete $updates->{$dn}->{'junk'};
+-    foreach my $attr ( keys %{$updates->{$dn}} )
+-    {
+-	if ( ref($updates->{$dn}->{$attr}) eq 'ARRAY' )
+-	{
+-	    if ( $code == 32 and scalar(@{$updates->{$dn}->{$attr}}) == 0 )
+-	    {
+-		delete $updates->{$dn}->{$attr};
+-	    }
+-	    else
+-	    {
+-		for (my $c = 0; $c < scalar(@{$updates->{$dn}->{$attr}}); $c++)
+-		{
+-		    utf8::upgrade($updates->{$dn}->{$attr}[$c]);
+-		}
+-	    }
+-	}
+-	else
+-	{
+-	    if ($updates->{$dn}->{$attr} !~ /^\s*$/)
+-	    {
+-		utf8::upgrade($updates->{$dn}->{$attr});
+-	    }
+-	    elsif ( $code == 32 )
+-	    {
+-		delete $updates->{$dn}->{$attr};
+-	    }
+-	    else
+-	    {
+-		$updates->{$dn}->{$attr} = [];
+-	    }
+-	}
+-    }
+-
+-    # Try and find old record (sme7)
+-    my ($oldfilter, undef, $oldsearchbase) = split /,/, $dn, 3;
+-    my $oldresult = $ldap->search( base => "$oldfilter,$oldsearchbase", filter => '(objectClass=*)', scope => 'base' );
+-    if ($oldresult->code)
+-    {
+-	warn "failed looking up old entry $oldfilter,$oldsearchbase: ", $result->error if $oldresult->code != 32;
+-    }
+-    else
+-    {
+-	if ($code == 32)
+-	{
+-	    my ($newdn, $newbase) = split /,/, $dn, 2;
+-
+-	    # Ensure key entry exist in old record before renaming
+-	    $result = $ldap->modify( "$oldfilter,$oldsearchbase", replace => { split('=', $newdn) } );
+-	    warn "failed to add attributes to old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
+-
+-	    # Move old record to new location
+-	    $result = $ldap->moddn( "$oldfilter,$oldsearchbase", newrdn => $newdn, newsuperior => $newbase, deleteoldrdn => 1 );
+-	    warn "failed to rename old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
+-
+-	    # Set things up as if we had found the new entry
+-	    $code = $oldresult->code;
+-	    @objectClass = $oldresult->entry(0)->get_value('objectClass');
+-	}
+-	else
+-	{
+-	    $result = $ldap->delete( "$oldfilter,$oldsearchbase" );
+-	    warn "failed to remove old entry $oldfilter,$oldsearchbase: ", $result->error if $result->code;
+-	}
+-    }
+-
+-    # Perform insert or update
+-    if ( $code == 32 )
+-    {
+-	$result = $ldap->add( $dn, attrs => [ %{$updates->{$dn}} ] );
+-	$result->code && warn "failed to add entry $dn: ", $result->error;
+-    }
+-    else
+-    {
+-	# Don't overwrite objectClass (just remove person if existing)
+-	$seen = { person => 1 };
+-
+-	# Remove samba objectClasses if removing samba attributes
+-	@{$seen}{'sambaSamAccount','sambaGroupMapping'} = (1,1) if ref($updates->{$dn}->{sambaSID}) eq 'ARRAY';
+-
+-	@{$updates->{$dn}->{objectClass}} = grep { ! $seen->{$_}++ } (@{$updates->{$dn}->{objectClass}}, @objectClass );
+-
+-	$result = $ldap->modify( $dn, replace => $updates->{$dn});
+-	$result->code && warn "failed to modify entry $dn: ", $result->error;
+-    }
+-}
+-$ldap->unbind;
+-
+-exit (0);
++/var/service/ldap/ldif-fix --update
+diff -ruN e-smith-ldap-5.2.0.ldap-init/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/20ldif e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/20ldif
+--- e-smith-ldap-5.2.0.ldap-init/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/20ldif	2010-12-01 11:12:30.000000000 -0700
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/20ldif	1969-12-31 17:00:00.000000000 -0700
+@@ -1,20 +0,0 @@
+-{
+-    foreach my $dn (keys %$ldif)
+-    {   
+-        delete $ldif->{$dn}->{'junk'};
+-        $OUT .= "dn: $dn\n";
+-        foreach my $attr ( keys %{$ldif->{$dn}} )
+-        {
+-            if (ref($ldif->{$dn}->{$attr}) eq 'ARRAY')
+-            {
+-                my %seen = ();
+-                $OUT .= "$attr: $_\n" foreach grep { ! $seen{$_}++ } @{$ldif->{$dn}->{$attr}};
+-            }
+-            else
+-            {
+-                $OUT .= "$attr: ".$ldif->{$dn}->{$attr}."\n" if $ldif->{$dn}->{$attr};
+-            }
+-        }
+-        $OUT .= "\n";
+-    }
+-}
+diff -ruN e-smith-ldap-5.2.0.ldap-init/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin
+--- e-smith-ldap-5.2.0.ldap-init/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	2010-12-01 11:12:30.000000000 -0700
++++ e-smith-ldap-5.2.0/root/etc/e-smith/templates/home/e-smith/db/ldap/ldif/template-begin	1969-12-31 17:00:00.000000000 -0700
+@@ -1,207 +0,0 @@
+-{
+-    use esmith::AccountsDB;
+-    use esmith::util;
+-    use Date::Parse;
+-
+-    my $schema = '/etc/openldap/schema/samba.schema';
+-
+-    $a = esmith::AccountsDB->open_ro;
+-    $ldapBase = esmith::util::ldapBase ($DomainName);
+-
+-    local ($dn, $dc, $obj, $attr, $account, $type);
+-    ($dc) = split (/\./, $DomainName);
+-
+-    $ldif = ();
+-
+-    # Top domain object
+-    utf8::upgrade($ldapBase);
+-    $ldif->{$ldapBase}->{objectClass} = [ qw(top organization dcObject) ];
+-    $ldif->{$ldapBase}->{dc} = $dc;
+-    $ldif->{$ldapBase}->{o} = $ldap{defaultCompany} || $DomainName;
+-
+-    # Top level groups
+-    foreach $obj ( qw(Users Groups Computers) )
+-    {
+-        $dn = "ou=$obj,$ldapBase";
+-        utf8::upgrade($dn);
+-
+-        $ldif->{$dn}->{objectClass} = [ qw(top organizationalUnit) ];
+-        $ldif->{$dn}->{ou} = $obj;
+-    }
+-
+-    local $dnmap = ();
+-
+-    # Read in user details
+-    while(my ($key,$pwd,$uid,$gid,undef,undef,$gecos,$dir,$shell) = getpwent())
+-    {
+-        # skip non sme users
+-        $account = $a->get($key) || next;
+-        $type = $account->prop('type') || 'unknown';
+-        next unless ($type =~ m{^(?:user|group|ibay|machine)$} or $key eq 'admin');
+-
+-        if ($type eq 'machine')
+-        {
+-            $dn = "uid=$key,ou=Computers,$ldapBase";
+-            utf8::upgrade($dn);
+-        }
+-        else
+-        {
+-            $dn = "uid=$key,ou=Users,$ldapBase";
+-            utf8::upgrade($dn);
+-        }
+-
+-        $dnmap->{$key}->{user} = $dn;
+-
+-        $ldif->{$dn}->{objectClass} = [ qw(posixAccount shadowAccount) ];
+-        $ldif->{$dn}->{uid} = $key;
+-        $pwd = "!*" if $pwd eq '!!';
+-        $ldif->{$dn}->{userPassword} = ($pwd =~ m/^\{/) ? $pwd : "\{CRYPT\}$pwd";
+-        $ldif->{$dn}->{uidNumber} = $uid;
+-        $ldif->{$dn}->{gidNumber} = $gid;
+-        $ldif->{$dn}->{gecos} = $gecos || '';
+-        $ldif->{$dn}->{cn} = $gecos || '';
+-        $ldif->{$dn}->{homeDirectory} = $dir;
+-        $ldif->{$dn}->{loginShell} = $shell;
+-
+-        if ($type eq 'user' or $key eq 'admin')
+-        {
+-            push @{$ldif->{$dn}->{objectClass}}, 'inetOrgPerson';
+-            $ldif->{$dn}->{mail} = "$key\@$DomainName";
+-            $ldif->{$dn}->{givenName} = $account->prop('FirstName') || '';
+-            $ldif->{$dn}->{sn} = $account->prop('LastName') || '';
+-            $ldif->{$dn}->{telephoneNumber} = $account->prop('Phone') || '';
+-            $ldif->{$dn}->{o} = $account->prop('Company') || '';
+-            $ldif->{$dn}->{ou} = $account->prop('Dept') || '';
+-            $ldif->{$dn}->{l} = $account->prop('City') || '';
+-            $ldif->{$dn}->{street} = $account->prop('Street') || '';
+-        }
+-        else
+-        {
+-            push @{$ldif->{$dn}->{objectClass}}, 'account';
+-        }
+-    }
+-    endpwent();
+-
+-    # www is a special user for all accounts
+-    foreach my $user (qw/www/)
+-    {   
+-        $dn = "uid=$user,ou=Users,$ldapBase";
+-        utf8::upgrade($dn);
+-
+-        $dnmap->{$user}->{user} = $dn;
+-
+-        $ldif->{$dn}->{objectClass} = [ qw(account posixAccount shadowAccount) ];
+-        @{$ldif->{$dn}}{'uid','userPassword','uidNumber','gidNumber','junk','junk','gecos','homeDirectory','loginShell'} = getpwnam($user);
+-        $ldif->{$dn}->{userPassword} = "!*" if $ldif->{$dn}->{userPassword} eq '!!';
+-        $ldif->{$dn}->{userPassword} =~ s/^/{CRYPT}/ unless $ldif->{$dn}->{userPassword} =~ m/^\{/;
+-        $ldif->{$dn}->{cn} = $ldif->{$dn}->{gecos} || '';
+-    }
+-    endpwent();
+-
+-    # Read in group details
+-    while(my ($key,undef,$gid,$members) = getgrent())
+-    {
+-        # skip non sme groups
+-        $account = $a->get($key) || next;
+-        $type = $account->prop('type') || 'unknown';
+-        next unless ($type =~ m{^(?:user|group|ibay|machine)$} or $key eq 'admin');
+-
+-        $dn = "cn=$key,ou=Groups,$ldapBase";
+-        utf8::upgrade($dn);
+-
+-        $dnmap->{$key}->{group} = $dn;
+-
+-        $ldif->{$dn}->{objectClass} = [ qw(posixGroup) ];
+-        $ldif->{$dn}->{cn} = $key;
+-        $ldif->{$dn}->{gidNumber} = $gid;
+-        $ldif->{$dn}->{memberUid} = [ split /\s+/, $members ];
+-
+-        if ($type eq 'group')
+-        {
+-            push @{$ldif->{$dn}->{objectClass}}, 'mailboxRelatedObject';
+-            $ldif->{$dn}->{mail} = "$key\@$DomainName";
+-            $ldif->{$dn}->{description} = $ldif->{$dnmap->{$key}->{user}}->{cn} if exists $ldif->{$dnmap->{$key}->{user}}->{cn};
+-        }
+-    }
+-    endgrent();
+-
+-    # Nobody and shared are special groups used by samba
+-    foreach my $group (qw/nobody shared www/)
+-    {   
+-        $dn = "cn=$group,ou=Groups,$ldapBase";
+-        utf8::upgrade($dn);
+-
+-        $dnmap->{$group}->{group} = $dn;
+-
+-        $ldif->{$dn}->{objectClass} = [ qw(posixGroup) ];
+-        @{$ldif->{$dn}}{'cn','junk','gidNumber','memberUid'} = getgrnam($group);
+-        $ldif->{$dn}->{memberUid} = [ split /\s+/, $ldif->{$dn}->{memberUid} ];
+-
+-        if ($group eq 'shared'){
+-            push @{$ldif->{$dn}->{objectClass}}, 'mailboxRelatedObject';
+-            $ldif->{$dn}->{mail} = "everyone\@$DomainName";
+-        }
+-    }
+-    endgrent();
+-
+-    # Read in samba user details
+-    if ( -f "$schema" and -x '/usr/bin/pdbedit' )
+-    {
+-        foreach my $line (`/usr/bin/pdbedit -Lw 2> /dev/null`)
+-        {
+-            my ($key,undef,$lmpass,$ntpass) = split(/:/,$line);
+-            next unless exists $dnmap->{$key};
+-
+-            push @{$ldif->{$dnmap->{$key}->{user}}->{objectClass}}, 'sambaSamAccount';
+-            $ldif->{$dnmap->{$key}->{user}}->{sambaLMPassword} = $lmpass;
+-            $ldif->{$dnmap->{$key}->{user}}->{sambaNTPassword} = $ntpass;
+-
+-            foreach my $info (`/usr/bin/pdbedit -v '$key' 2> /dev/null`){
+-                $ldif->{$dnmap->{$key}->{user}}->{sambaSID} = $1 if $info =~ m{User SID:\s+(S-.*)$};
+-                $ldif->{$dnmap->{$key}->{user}}->{displayName} = $1 if $info =~ m{Full Name:\s+(.*)$};
+-                $ldif->{$dnmap->{$key}->{user}}->{sambaPrimaryGroupSID} = $1 if $info =~ m{Primary Group SID:\s+(S-.*)$};
+-                $ldif->{$dnmap->{$key}->{user}}->{sambaAcctFlags} = $1 if $info =~ m{Account Flags:\s+(.*)$};
+-                $ldif->{$dnmap->{$key}->{user}}->{sambaPwdLastSet} = str2time($1) if $info =~ m{Password last set:\s+(.*)$};
+-            }
+-        }
+-    }
+-
+-    # Read in samba group mappings
+-    if ( -f "$schema" and -x '/usr/bin/net' )
+-    {
+-        foreach (`/usr/bin/net groupmap list 2> /dev/null`){
+-            chomp;
+-            next if m{\(S-1-5-32-\d+\)};
+-            if (/^(.*) \((S-.*-\d+)\) -> (.*)$/)
+-            {
+-                next unless exists $dnmap->{$3};
+-
+-                push @{$ldif->{$dnmap->{$3}->{group}}->{objectClass}}, 'sambaGroupMapping';
+-                $ldif->{$dnmap->{$3}->{group}}->{displayName} = $1;
+-                $ldif->{$dnmap->{$3}->{group}}->{sambaSID} = $2;
+-                $ldif->{$dnmap->{$3}->{group}}->{sambaGroupType} = '2';
+-            }
+-        }
+-    }
+-
+-    # Ensure that attributes are utf8
+-    foreach $dn (keys %$ldif)
+-    {
+-        foreach $attr ( keys %{$ldif->{$dn}} )
+-        {
+-            if ( ref($ldif->{$dn}->{$attr}) eq 'ARRAY' )
+-            {
+-                for (my $c = 0; $c < scalar(@{$ldif->{$dn}->{$attr}}); $c++)
+-                {
+-                    utf8::upgrade($ldif->{$dn}->{$attr}[$c]);
+-                }
+-            }
+-            else
+-            {
+-                utf8::upgrade($ldif->{$dn}->{$attr});
+-            }
+-        }
+-    }
+-
+-    $OUT = "";
+-}
+diff -ruN e-smith-ldap-5.2.0.ldap-init/root/var/service/ldap/convert_ldif e-smith-ldap-5.2.0/root/var/service/ldap/convert_ldif
+--- e-smith-ldap-5.2.0.ldap-init/root/var/service/ldap/convert_ldif	2010-12-01 11:12:29.000000000 -0700
++++ e-smith-ldap-5.2.0/root/var/service/ldap/convert_ldif	1969-12-31 17:00:00.000000000 -0700
+@@ -1,67 +0,0 @@
+-#! /usr/bin/perl
+-
+-use strict;
+-use warnings;
+-
+-
+-use Net::LDAP::LDIF;
+-use esmith::util;
+-
+-my $olddomain = shift;
+-my $newdomain = shift;
+-
+-my $ldif = Net::LDAP::LDIF->new( "/dev/stdin", "r", onerror => 'undef' );
+-my $writer = Net::LDAP::LDIF->new("/dev/stdout", "w", onerror => 'undef' );
+-
+-my $new = esmith::util::ldapBase($newdomain);
+-my $old = esmith::util::ldapBase($olddomain);
+-
+-while( not $ldif->eof())
+-{
+-    my $entry = $ldif->read_entry();
+-    if ($ldif->error())
+-    {
+-        print "Error msg: ", $ldif->error(), "\n";
+-        print "Error lines:\n", $ldif->error_lines(), "\n";
+-        next;
+-    }
+-    next unless $entry;
+-    my $dn = $entry->dn;
+-    my @object_classes = $entry->get_value('objectClass');
+-    my %object_classes = map { $_ => 1 } @object_classes;
+-    if ($dn eq $old)
+-    {
+-        # this is the domain container object - objectClasses will be
+-        # 'top' and 'domain'
+-        my $dc = $new;
+-        $dc =~ s/,.*//g;
+-        $dc =~ s/^dc=//;
+-        $entry->replace(dc => $dc);
+-    }
+-    if ($object_classes{group})
+-    {
+-        # We used to create group entries with invalid objectClass group
+-        # - fix these if we find them
+-        # possibly not required any more, but harmless
+-        @object_classes = grep { $_ ne 'group' } @object_classes;
+-        $entry->replace(objectClass => [ @object_classes, 'posixGroup' ] );
+-    }
+-    # do any other object transformations
+-
+-    # Update the mail attributes
+-    if ($entry->exists('mail')){
+-        my @newmails = ();
+-        foreach ($entry->get_value('mail')){
+-            $_ =~ s/\@$olddomain$/\@$newdomain/;
+-            push (@newmails,$_);
+-        }
+-        $entry->replace(mail => [ @newmails ]);
+-    }
+-
+-    # Update basedb suffix
+-    $dn =~ s/$old$/$new/;
+-    $entry->dn($dn);
+-    $writer->write($entry);
+-}
+-$ldif->done( );
+-
+diff -ruN e-smith-ldap-5.2.0.ldap-init/root/var/service/ldap/ldif-fix e-smith-ldap-5.2.0/root/var/service/ldap/ldif-fix
+--- e-smith-ldap-5.2.0.ldap-init/root/var/service/ldap/ldif-fix	1969-12-31 17:00:00.000000000 -0700
++++ e-smith-ldap-5.2.0/root/var/service/ldap/ldif-fix	2010-12-01 12:09:24.000000000 -0700
+@@ -0,0 +1,414 @@
++#!/usr/bin/perl -T
++
++use strict;
++use warnings;
++use Net::LDAP;
++use Net::LDAP::LDIF;
++use Date::Parse;
++use esmith::ConfigDB;
++use esmith::AccountsDB;
++use esmith::util;
++use Getopt::Long qw(:config bundling);
++
++$ENV{'PATH'} = '/bin:/usr/bin:/sbin:/usr/sbin';
++$ENV{'LANG'} = 'C';
++
++sub dnsort {
++    my %type = ( add => 1, modrdn => 2, moddn => 2, modify => 3, delete => 4);
++    my %attr = ( dc => 1, ou => 2, cn => 3, uid => 4);
++
++    my ($oa) = ($a->get_value('newrdn') || $a->dn) =~ /^([^=]+)=/;
++    my ($ob) = ($b->get_value('newrdn') || $b->dn) =~ /^([^=]+)=/;
++    my ($ua, $ub) = map { my $tu = $_->get_value('uidnumber'); defined $tu && $tu ne '' ? $tu : -1 } ($a, $b);
++    my ($ga, $gb) = map { my $tg = $_->get_value('gidnumber'); defined $tg && $tg ne '' ? $tg : -1 } ($a, $b);
++
++    ($attr{$oa} || 9) <=> ($attr{$ob} || 9) || ($type{$a->changetype} || 9) <=> ($type{$b->changetype} || 9) || 
++    $ua <=> $ub || $ga <=> $gb || ($a->get_value('newrdn') || $a->dn) cmp ($b->get_value('newrdn') || $b->dn);
++}
++
++my $c = esmith::ConfigDB->open_ro;
++my $a = esmith::AccountsDB->open_ro;
++
++my $auth = $c->get('ldap')->prop('Authentication') || 'disabled';
++my $schema = '/etc/openldap/schema/samba.schema';
++
++my $domain = $c->get('DomainName')->value;
++my $basedn = esmith::util::ldapBase($domain);
++
++my $userou = 'ou=Users';
++my $groupou = 'ou=Groups';
++my $compou = 'ou=Computers';
++
++my ($dc) = split /\./, $domain;
++my $company = $c->get_prop('ldap', 'defaultCompany') || $domain;
++
++my %opt;
++GetOptions ( \%opt, "diff|d", "update|u", "input|i=s", "output|o=s" );
++$opt{input} = '/usr/sbin/slapcat -c 2> /dev/null|' unless $opt{input} && ($opt{input} eq '-' || -f "$opt{input}" || -c "$opt{input}");
++$opt{diff} = 1 if $opt{update};
++if ( $opt{output} && $opt{output} =~ m{^([-\w/.]+)$}) {
++    $opt{output} = $1;
++} else {
++    $opt{output} = '-';
++}
++
++my ($data, $dn);
++
++# Top object (base)
++$data->{$basedn} = {
++    objectclass => [qw/organization dcObject top/],
++    dc          => $dc,
++    o           => $company,
++};
++
++# Top containers for users/groups/computers
++foreach (qw/Users Groups Computers/) {
++    $data->{"ou=$_,$basedn"} = {
++        objectclass => [qw/organizationalUnit top/],
++        ou          => $_,
++    };
++}
++
++# Common accounts needed for SME to work properly
++$data->{"cn=nobody,$groupou,$basedn"}->{objectclass} = [ qw/posixGroup/ ];
++$data->{"uid=www,$userou,$basedn"}->{objectclass} = [ qw/account/ ];
++$data->{"cn=www,$groupou,$basedn"} = { objectclass => [ qw/posixGroup/ ], memberuid   => [ qw/admin/ ] };
++$data->{"cn=shared,$groupou,$basedn"} = {
++    objectclass => [ qw/posixGroup mailboxRelatedObject/ ],
++    mail        => "everyone\@$domain",
++    memberuid   => [ qw/www/ ]
++};
++
++# Read in accounts database information
++foreach my $acct ($a->get('admin'), $a->users, $a->groups, $a->ibays, $a->get_all_by_prop(type => 'machine')) {
++    my $key = $acct->key;
++    my $type = $acct->prop('type');
++
++    next if $key eq 'Primary';
++
++    $dn = "uid=$key,".($type eq 'machine' ? $compou : $userou).",$basedn";
++    if ($type =~ /^(?:user|group|machine|ibay)$/ || $key eq 'admin') {
++        if ($type eq 'user' || $key eq 'admin') {
++            # Allow removal of obsolete person objectclass and samba attributes
++            push @{$data->{$dn}->{_delete}->{objectclass}}, 'person';
++            
++
++            push @{$data->{$dn}->{objectclass}}, 'inetOrgPerson';
++            $data->{$dn}->{mail} = "$key\@$domain";
++            @{$data->{$dn}}{qw/givenname sn telephonenumber o ou l street/} =
++                map { $acct->prop($_) || [] } qw/FirstName LastName Phone Company Dept City Street/;
++            $data->{$dn}->{cn} = $data->{$dn}->{gecos} = $acct->prop('FirstName').' '.$acct->prop('LastName');
++        }
++        else {
++            push @{$data->{$dn}->{objectclass}}, 'account';
++        }
++
++        # users/ibays need to be a member of shared
++        push @{$data->{"cn=shared,$groupou,$basedn"}->{memberuid}}, $key if $type =~ /^(user|ibay)$/ || $key eq 'admin';
++
++        if ($auth ne 'enabled') {
++            # Allow removal of shadow properties
++            push @{$data->{$dn}->{_delete}->{objectclass}}, 'shadowAccount';
++            $data->{$dn}->{_delete}->{lc($_)} = 1 foreach qw/userPassword shadowLastChange shadowMin shadowMax
++                                                             shadowWarning shadowInactive shadowExpire shadowFlag/;
++
++            if ( -f "$schema" ) {
++                # If we will be adding samba properties then allow removal
++                push @{$data->{$dn}->{_delete}->{objectclass}}, 'sambaSamAccount';
++                $data->{$dn}->{_delete}->{lc($_)} = 1 foreach qw/displayName sambaAcctFlags sambaLMPassword sambaNTPassword 
++                                                                 sambaNTPassword sambaPrimaryGroupSID sambaPwdLastSet sambaSID/;
++            }
++        }
++    }
++
++    $dn = "cn=$key,$groupou,$basedn";
++    push @{$data->{$dn}->{objectclass}}, 'posixGroup';
++    if ($type eq 'group') {
++        # Allways replace memberuid with new set
++        $data->{$dn}->{_delete}->{memberuid} = 1;
++
++        push @{$data->{$dn}->{objectclass}}, 'mailboxRelatedObject';
++
++        $data->{$dn}->{mail} = "$key\@$domain";
++        $data->{$dn}->{description} = $acct->prop('Description') || [];
++        push @{$data->{$dn}->{memberuid}}, split /,/, ($acct->prop('Members') || '');
++
++        # www needs to be a memeber of every group
++        push @{$data->{$dn}->{memberuid}}, 'www';
++
++        if ($auth ne 'enabled' && -f "$schema" ) {
++            # If we will be adding samba properties then allow removal
++            push @{$data->{$dn}->{_delete}->{objectclass}}, 'sambaGroupMapping';
++            $data->{$dn}->{_delete}->{lc($_)} = 1 foreach qw/displayName sambaGroupType sambaSID/;
++        }
++    }
++    elsif ($type eq 'ibay') {
++        $dn = "cn=".$acct->prop('Group').",$groupou,$basedn";
++        push @{$data->{$dn}->{memberuid}}, $acct->key;
++    }
++}
++
++if ($auth ne 'enabled') {
++    # Read in information from unix (passwd) system 
++    open PASSWD, '/etc/passwd';
++    while (<PASSWD>) {
++        chomp;
++        my @passwd = split /:/, $_;
++        next unless scalar @passwd == 7;
++
++        $dn = "uid=$passwd[0],".($passwd[0] =~ /\$$/ ? $compou : $userou).",$basedn";
++        next unless exists $data->{$dn};
++
++        push @{$data->{$dn}->{objectclass}}, 'posixAccount';
++        @{$data->{$dn}}{qw/cn uid uidnumber gidnumber homedirectory loginshell gecos/} =
++            map { $passwd[$_] ? $passwd[$_] : [] } (4,0,2,3,5,6,4);
++    }
++    close (PASSWD);
++
++    # Shadow file defaults (pulled from cpu.conf)
++    my %shadow_def = ( 1 => [], 2 => 11192, 3 => -1, 4 => 99999, 5 => 7, 6 => -1, 7 => -1, 8 => 134538308 );
++
++    # Read in information from unix (shadow) system 
++    open SHADOW, '/etc/shadow';
++    while (<SHADOW>) {
++        chomp;
++        my @shadow = split /:/, $_;
++        next unless scalar @shadow >= 6;
++        $shadow[1] = '!*' if $shadow[1] eq '!!';
++        $shadow[1] = "{CRYPT}$shadow[1]" unless $shadow[1] =~ /^\{/;
++
++        $dn = "uid=$shadow[0],".($shadow[0] =~ /\$$/ ? $compou : $userou).",$basedn";
++        next unless exists $data->{$dn};
++
++        push @{$data->{$dn}->{objectclass}}, 'shadowAccount';
++        @{$data->{$dn}}{ map { lc($_) } qw/userPassword shadowLastChange shadowMin shadowMax shadowWarning shadowInactive 
++                                           shadowExpire shadowFlag/} = map { $shadow[$_] ? $shadow[$_] : $shadow_def{$_} } (1..8);
++    }
++    close (SHADOW);
++
++    # Read in information from unix (group) system 
++    open GROUP, '/etc/group';
++    while (<GROUP>) {
++        chomp;
++        my @group = split /:/, $_;
++        next unless scalar @group >= 3;
++        $group[3] = [ split /,/, ($group[3] || '') ];
++
++        $dn = "cn=$group[0],$groupou,$basedn";
++        next unless exists $data->{$dn};
++
++        push @{$data->{$dn}->{objectclass}}, 'posixGroup';
++        @{$data->{$dn}}{qw/cn gidnumber/} = map { $group[$_] ? $group[$_] : [] } (0,2);
++        push @{$data->{$dn}->{memberuid}}, @{$group[3]};
++    }
++    close (GROUP);
++
++    my %smbprop = (
++        'User SID'            => 'sambasid',
++        'Account Flags'       => 'sambaacctflags',
++        'Primary Group SID'   => 'sambaprimarygroupsid',
++        'Full Name'           => 'displayname',
++        'Password last set'   => 'sambapwdlastset',
++    );
++
++    # Read in information from unix (smbpasswd) system 
++    if ( -f "$schema" && -x '/usr/bin/pdbedit' ) {
++        $dn = undef;
++        open SMBDETAIL, '/usr/bin/pdbedit -vL 2> /dev/null|';
++        while (<SMBDETAIL>) {
++            chomp;
++
++            $dn = ("uid=$1,".($1 =~ /\$$/ ? $compou : $userou).",$basedn") if m/^Unix username:\s+(\S.*)$/;
++            next unless $dn && exists $data->{$dn};
++
++            # Map the samba account properties that we care about
++            $data->{$dn}->{$smbprop{$1}} = ($2 ? str2time($2) : (defined $3 ? $3 : []))
++                if m/^(.+):\s+(?:(\S.*\d{4} \d{2}:\d{2}:\d{2}.*)|(.*))$/ && exists $smbprop{$1};
++        }
++        close (SMBDETAIL);
++
++        open SMBPASSWD, '/usr/bin/pdbedit -wL 2> /dev/null|';
++        while (<SMBPASSWD>) {
++            chomp;
++            my @smbpasswd = split /:/, $_;
++            next unless scalar @smbpasswd >= 6;
++
++            $dn = "uid=$smbpasswd[0],".($smbpasswd[0] =~ /\$$/ ? $compou : $userou).",$basedn";
++            next unless exists $data->{$dn} && exists $data->{$dn}->{uidnumber} && $data->{$dn}->{uidnumber} eq $smbpasswd[1];
++
++            push @{$data->{$dn}->{objectclass}}, 'sambaSamAccount';
++            @{$data->{$dn}}{qw/sambalmpassword sambantpassword/} = map { $smbpasswd[$_] ? $smbpasswd[$_] : [] } (2,3);
++        }
++        close (SMBPASSWD);
++    }
++
++    if ( -f "$schema" && -x '/usr/bin/net' ) {
++        open GROUPMAP, '/usr/bin/net groupmap list 2> /dev/null|';
++        while (<GROUPMAP>) {
++            chomp;
++
++            if (m/^(.+) \((.+)\) -> (.+)$/) {
++                # Skip local machine accounts
++                next if $2 =~ /S-1-5-32-\d+/;
++
++                $dn = "cn=$3,$groupou,$basedn";
++                next unless exists $data->{$dn};
++
++                push @{$data->{$dn}->{objectclass}}, 'sambaGroupMapping';
++                @{$data->{$dn}}{qw/displayname sambasid sambagrouptype/} = ($1, $2, 2);
++            }
++        }
++        close (GROUPMAP);
++    }
++}
++
++my @ldif;
++
++# Loop through ldap data and update as necessary
++my $reader = Net::LDAP::LDIF->new( $opt{input}, 'r', onerror => 'undef' );
++while( not $reader->eof()) {
++    my $entry = $reader->read_entry() || next;
++    $dn = $entry->dn;
++
++    # Ensure the basedn is correct
++    $dn = "$1$basedn" if $dn =~ /^((?:(?!dc=)[^,]+,)*)dc=/;
++
++    # Ensure correct ou is part of user/groups/computers
++    if ($dn =~ /^(uid=([^,\$]+)(\$)?),((?:(?!dc=)[^,]+,)*)dc=/) {
++        if ( defined $3 && $3 eq '$') {
++            $dn = "$1,$compou,$basedn";
++        }
++        elsif (grep /posixGroup/, @{$entry->get_value('objectclass', asref => 1) || []}) {
++            $dn = "cn=$2,$groupou,$basedn";
++            
++            # Cleanup attributes that the modrdn will perform
++            $entry->add(cn => $2);
++            $entry->delete(uid => [$2]);
++        }
++        else {
++            $dn = "$1,$userou,$basedn";
++        }
++    }
++    elsif ($dn =~ /^(cn=[^,]+),((?:(?!dc=)[^,]+,)*)dc=/) {
++        $dn = "$1,$groupou,$basedn" unless $2 =~ /^ou=auto\./;
++    }
++
++    # Don't process records twice
++    next if $data->{$dn}->{_done};
++
++    # Rename existing entry into place if we can
++    if ($dn ne $entry->dn) {
++        my $rdn = Net::LDAP::Entry->new;
++        $rdn->dn($entry->dn);
++        $rdn->changetype('modrdn');
++        my ($newdn, $newbase) = split /,/, $dn, 2;
++        $rdn->add(newrdn => $newdn, deleteoldrdn => 1, newsuperior => $newbase);
++        push @ldif, $rdn;
++
++        # Now we can change the entry to new dn
++        $entry->dn($dn);
++    }
++
++    # Change type to modify so that we can keep track of changes we make
++    $entry->changetype('modify');
++
++    # Hack to make upgrades work (add calEntry if calFGUrl attributes exists)
++    if ($entry->exists('calFBURL') && -f "/etc/openldap/schema/rfc2739.schema") {
++        push @{$data->{$dn}->{objectclass}}, 'calEntry';
++    }
++
++    my %attributes = ();
++    @attributes{ keys %{$data->{$dn}}, exists $data->{$dn}->{_delete} ? map { lc($_) } keys %{$data->{$dn}->{_delete}} : () } = ();
++
++    foreach my $attr (sort keys %attributes) {
++        # Skip the pseudo attributes
++        next if $attr =~ /^_/;
++
++        my @l = @{$entry->get_value($attr, asref => 1) || []};
++        my @u = exists $data->{$dn}->{$attr} ? (ref $data->{$dn}->{$attr} ? @{$data->{$dn}->{$attr}} : ($data->{$dn}->{$attr})) : ();
++
++        # Figure out differences between attributes
++        my (@lonly, @uonly, @donly, %lseen, %useen, %dseen) = () x 6;
++
++        # Unique lists of what is in ldap and what needs to be in ldap
++        @lseen{@l} = ();
++        @useen{@u} = ();
++
++        # Create list of attributes that aren't in the other
++        @uonly = grep { ! exists $lseen{$_} } keys %useen;
++        @lonly = grep { ! exists $useen{$_} } keys %lseen;
++
++        # Determine which of the ldap only attributes we need to remove
++        if ((keys %useen == 1 && keys %lseen == 1) || (keys %useen == 0 && exists $data->{$dn}->{$attr})) {
++            # Replacing a single entry or erasing entire entry
++            @donly = @lonly;
++        }
++        elsif ($data->{$dn}->{_delete} && $data->{$dn}->{_delete}->{$attr}) {
++            if (my $ref = ref($data->{$dn}->{_delete}->{$attr})) {
++                # Map hash keys or array elemts to valid values to delete
++                @dseen{$ref eq 'HASH' ? keys %{$data->{$dn}->{_delete}->{$attr}} : @{$data->{$dn}->{_delete}->{$attr}}} = ();
++                @donly = grep { exists $dseen{$_} } @lonly;
++            }
++            else {
++                # Permission to remove all values
++                @donly = @lonly;
++            }
++        }
++
++        if (@donly && @donly == @lonly) {
++            # If we are removing all ldap only attributes do a remove or full delete
++            if (@uonly) {
++                $entry->replace($attr => [ @uonly ]);
++            }
++            else {
++                $entry->delete($attr => [ @donly == keys %lseen ? () : @donly ]);
++            }
++        }
++        else {
++            $entry->delete($attr => [ @donly ]) if @donly;
++            $entry->add($attr => [ @uonly ]) if @uonly;
++        }
++    }
++
++    $data->{$dn}->{_done} = 1;
++    push @ldif, $entry;
++}
++$reader->done();
++
++# Add missing records that didn't exist in ldap yet
++foreach $dn (grep { ! exists $data->{$_}->{_done} } sort keys %$data) {
++    my $entry = Net::LDAP::Entry->new;
++    $entry->dn($dn);
++
++    foreach my $attr (sort keys %{$data->{$dn}}) {
++        # Skip the pseudo attributes
++        next if $attr =~ /^_/;
++
++        my %seen = ();
++        @seen{ref $data->{$dn}->{$attr} ? @{$data->{$dn}->{$attr}} : ($data->{$dn}->{$attr})} = ();
++        $entry->add($attr => [ sort keys %seen ]) if keys %seen != 0;
++    }
++
++    push @ldif, $entry;
++}
++
++#------------------------------------------------------------
++# Update LDAP database entry.
++#------------------------------------------------------------
++my $ldap;
++if ($opt{update}) {
++    $ldap = Net::LDAP->new('localhost') or die "$@";
++    $ldap->bind( dn => "cn=root,$basedn", password => esmith::util::LdapPassword() );
++}
++
++my $writer = Net::LDAP::LDIF->new( $opt{output}, 'w', onerror => 'undef', wrap => 0, sort => 1, change => $opt{diff} );
++foreach my $entry (sort dnsort @ldif) {
++    if ($opt{update} && ($entry->changetype ne 'modify' || @{$entry->{changes}}) ) {
++        my $result = $entry->update($ldap);
++        warn "Failure to ",$entry->changetype," ",$entry->dn,": ",$result->error,"\n" if $result->code;
++    }
++
++    if ($writer->{change} || $entry->changetype !~ /modr?dn/) {
++        $writer->write_entry($entry);
++    }
++}
+diff -ruN e-smith-ldap-5.2.0.ldap-init/root/var/service/ldap/run e-smith-ldap-5.2.0/root/var/service/ldap/run
+--- e-smith-ldap-5.2.0.ldap-init/root/var/service/ldap/run	2010-12-01 11:12:29.000000000 -0700
++++ e-smith-ldap-5.2.0/root/var/service/ldap/run	2010-12-01 12:08:53.000000000 -0700
+@@ -2,27 +2,22 @@
+ 
+ exec 2>&1
+ 
+-domain=$(/sbin/e-smith/config get DomainName)
+-old_domain=$(readlink ldif)
+-
+-loglevel=$(/sbin/e-smith/config getprop ldap LogLevel || echo 256)
+-
+ ./control/1
+ 
+-if [ -n "$old_domain" ]
+-then
+-    old_domain=$(basename $old_domain | sed s/.ldif//)
+-    old_ldif="/home/e-smith/db/ldap/$old_domain.ldif"
+-fi
+-
++domain=$(/sbin/e-smith/config get DomainName)
+ ldif="/home/e-smith/db/ldap/$domain.ldif"
+ 
+-if [ "$old_domain" != "$domain" ]
++if [ -e ldif ]
+ then
+-    # The domain name has changed, so we need to delete
+-    # the old directory contents. We still have the old
+-    # dump.
+-    find /var/lib/ldap -type f | xargs rm -f
++    old_ldif=$(readlink ldif)
++    if [ "$old_ldif" != "$ldif" ]
++    then
++        # The domain name has changed, so we need to delete
++        # the old directory contents. We still have the old
++        # dump.
++        mv -f $old_ldif $ldif
++        find /var/lib/ldap -type f | xargs rm -f
++    fi
+ fi
+ 
+ if [ -f /var/lib/ldap/nextid.dbb ]
+@@ -44,19 +39,15 @@
+ # Prime directory if required
+ if [ \! -f /var/lib/ldap/id2entry.bdb ]
+ then
+-    if [ -e "$old_ldif" ]
++    if [ -e ldif ]
+     then
+-        grep -q "objectClass: dcObject" "$ldif" || /sbin/e-smith/expand-template /home/e-smith/db/ldap/ldif
+-        perl ./convert_ldif $old_domain $domain < $old_ldif | \
+-            setuidgid ldap slapadd -c
++        ./ldif-fix -i ldif | setuidgid ldap slapadd -c
+     else
+-        if [ \! -e "$ldif" ]
+-        then
+-            /sbin/e-smith/expand-template /home/e-smith/db/ldap/ldif
+-        fi
+-        setuidgid ldap slapadd -c < $ldif
++        ./ldif-fix -i /dev/null | setuidgid ldap slapadd -c
+     fi
+ fi
+ 
++loglevel=$(/sbin/e-smith/config getprop ldap LogLevel || echo 256)
++
+ # Now run daemon
+ exec /usr/sbin/slapd -4 -u ldap -d $loglevel -s 0 -h "ldap:/// ldaps:/// ldapi:///"
