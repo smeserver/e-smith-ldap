@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.84 2010/12/01 19:24:58 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.85 2010/12/01 19:30:05 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 72
+%define release 73
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -91,6 +91,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Dec 1 2010 Shad L. Lords <slord@mail.com> 5.2.0-72.sme
+- Fix permissions on ldif-fix script [SME: 6244]
+
 * Wed Dec 1 2010 Shad L. Lords <slord@mail.com> 5.2.0-72.sme
 - Replace convert_ldif with ldif-fix script [SME: 6244]
 - Remove ldif template and expansion [SME: 6421]
@@ -1056,7 +1059,7 @@ rm -f %{name}-%{version}-%{release}-filelist
 /sbin/e-smith/genfilelist $RPM_BUILD_ROOT \
     --file /var/service/ldap/run 'attr(0750,root,root)' \
     --file /var/service/ldap/log/run 'attr(0750,root,root)' \
-    --file /var/service/ldap/convert_ldif 'attr(0750,root,root)' \
+    --file /var/service/ldap/ldif-fix 'attr(0750,root,root)' \
     --file /var/service/ldap/finish 'attr(0750,root,root)' \
     --file /var/service/ldap/control/1 'attr(0750,root,root)' \
     --dir /var/log/bdb 'attr(0700,ldap,ldap)' \
