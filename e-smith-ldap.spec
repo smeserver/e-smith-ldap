@@ -1,4 +1,4 @@
-# $Id: e-smith-ldap.spec,v 1.85 2010/12/01 19:30:05 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.86 2010/12/01 19:30:40 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
@@ -91,7 +91,7 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
-* Wed Dec 1 2010 Shad L. Lords <slord@mail.com> 5.2.0-72.sme
+* Wed Dec 1 2010 Shad L. Lords <slord@mail.com> 5.2.0-73.sme
 - Fix permissions on ldif-fix script [SME: 6244]
 
 * Wed Dec 1 2010 Shad L. Lords <slord@mail.com> 5.2.0-72.sme
