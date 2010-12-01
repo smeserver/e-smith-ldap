@@ -1,0 +1,12 @@
+diff -up e-smith-ldap-5.2.0/createlinks.update-ldap-later e-smith-ldap-5.2.0/createlinks
+--- e-smith-ldap-5.2.0/createlinks.update-ldap-later	2010-11-30 20:41:07.000000000 -0700
++++ e-smith-ldap-5.2.0/createlinks	2010-11-30 20:42:21.000000000 -0700
+@@ -32,7 +32,7 @@ event_link("ldap-delete", "ibay-delete",
+ 
+ event_link("ldap-update-simple", "machine-account-create", "95");
+ 
+-event_link("ldap-update", "bootstrap-ldap-save", "25");
++event_link("ldap-update", "bootstrap-ldap-save", "80");
+ event_link("cleanup-unix-user-group", "bootstrap-ldap-save", "98");
+ 
+ event_link("ldap-dump", "pre-backup", "30");
