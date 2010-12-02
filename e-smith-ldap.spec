@@ -1,10 +1,10 @@
-# $Id: e-smith-ldap.spec,v 1.86 2010/12/01 19:30:40 slords Exp $
+# $Id: e-smith-ldap.spec,v 1.87 2010/12/02 00:46:05 slords Exp $
 
 Summary: e-smith server and gateway - LDAP module
 %define name e-smith-ldap
 Name: %{name}
 %define version 5.2.0
-%define release 73
+%define release 74
 Version: %{version}
 Release: %{release}%{?dist}
 License: GPL
@@ -76,6 +76,7 @@ Patch62: e-smith-ldap-5.2.0-ldapmodify.patch
 Patch63: e-smith-ldap-5.2.0-fix-department.patch
 Patch64: e-smith-ldap-5.2.0-update-ldap-later.patch
 Patch65: e-smith-ldap-5.2.0-ldap-init.patch
+Patch66: e-smith-ldap-5.2.0-replace-logic.patch
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildArchitectures: noarch
 Requires: e-smith-base
@@ -91,6 +92,9 @@ AutoReqProv: no
 e-smith server and gateway software - LDAP module.
 
 %changelog
+* Wed Dec 1 2010 Shad L. Lords <slord@mail.com> 5.2.0-74.sme
+- Fix replace logic in ldif-fix [SME: 6423]
+
 * Wed Dec 1 2010 Shad L. Lords <slord@mail.com> 5.2.0-73.sme
 - Fix permissions on ldif-fix script [SME: 6244]
 
@@ -1034,6 +1038,7 @@ e-smith server and gateway software - LDAP module.
 %patch63 -p1
 %patch64 -p1
 %patch65 -p1
+%patch66 -p1
 
 %build
 mkdir -p root/etc/e-smith/tests
